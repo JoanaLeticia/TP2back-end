@@ -1,0 +1,231 @@
+package br.com.gameverse.service;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import br.com.gameverse.dto.ClienteDTO;
+import br.com.gameverse.dto.ClienteResponseDTO;
+import br.com.gameverse.dto.UsuarioResponseDTO;
+import br.com.gameverse.model.Cliente;
+import br.com.gameverse.model.Endereco;
+import br.com.gameverse.model.Municipio;
+import br.com.gameverse.model.Perfil;
+import br.com.gameverse.model.Telefone;
+import br.com.gameverse.repository.ClienteRepository;
+import br.com.gameverse.repository.MunicipioRepository;
+import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.common.Page;
+import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+
+@ApplicationScoped
+public class ClienteServiceImpl implements ClienteService {
+    @Inject
+    ClienteRepository clienteRepository;
+
+    @Inject
+    MunicipioRepository municipioRepository;
+
+    @Override
+    @Transactional
+    public ClienteResponseDTO create(ClienteDTO cliente) {
+        Cliente novoCliente = new Cliente();
+        novoCliente.setNome(cliente.nome());
+        novoCliente.setEmail(cliente.email());
+        novoCliente.setSenha(cliente.senha());
+        novoCliente.setPerfil(Perfil.CLIENTE);
+        novoCliente.setCpf(cliente.cpf());
+        novoCliente.setDataNascimento(cliente.dataNascimento());
+
+        if (cliente.listaTelefone() != null && !cliente.listaTelefone().isEmpty()) {
+            List<Telefone> telefones = cliente.listaTelefone().stream()
+                    .map(tel -> {
+                        Telefone telefone = new Telefone();
+                        telefone.setCodArea(tel.codArea());
+                        telefone.setNumero(tel.numero());
+                        return telefone;
+                    })
+                    .collect(Collectors.toList());
+            novoCliente.setTelefones(telefones);
+        } else {
+            novoCliente.setTelefones(Collections.emptyList());
+        }
+
+        //  Configure a lista de endereços
+        if (cliente.listaEndereco() != null && !cliente.listaEndereco().isEmpty()) {
+            List<Endereco> enderecos = cliente.listaEndereco().stream()
+                    .map(end -> {
+                        Endereco endereco = new Endereco();
+                        endereco.setCep(end.cep());
+                        endereco.setBairro(end.bairro());
+                        endereco.setNumero(end.numero());
+                        endereco.setLogradouro(end.logradouro());
+                        endereco.setComplemento(end.complemento());
+
+                        Municipio idMunicipio = municipioRepository.findById(end.idMunicipio());
+                        endereco.setMunicipio(idMunicipio);
+
+                        return endereco;
+                    })
+                    .collect(Collectors.toList());
+            novoCliente.setEndereco(enderecos);
+            novoCliente.setPerfil(Perfil.CLIENTE);
+        } else {
+            novoCliente.setEndereco(Collections.emptyList());
+        } 
+
+        clienteRepository.persist(novoCliente);
+
+        return ClienteResponseDTO.valueOf(novoCliente);
+    }
+
+    @Override
+    @Transactional
+    public ClienteResponseDTO update(ClienteDTO clienteDTO, Long id) {
+        Cliente clienteEditado = clienteRepository.findById(id);
+
+        clienteEditado.setNome(clienteDTO.nome());
+        clienteEditado.setEmail(clienteDTO.email());
+        clienteEditado.setSenha(clienteDTO.senha());
+        clienteEditado.setPerfil(Perfil.CLIENTE);
+        clienteEditado.setCpf(clienteDTO.cpf());
+        clienteEditado.setDataNascimento(clienteDTO.dataNascimento());
+        
+        if (clienteDTO.listaTelefone() != null && !clienteDTO.listaTelefone().isEmpty()) {
+            clienteEditado.getTelefones().clear();
+            List<Telefone> telefones = clienteDTO.listaTelefone().stream()
+                    .map(tel -> {
+                        Telefone telefone = new Telefone();
+                        telefone.setCodArea(tel.codArea());
+                        telefone.setNumero(tel.numero());
+                        return telefone;
+                    })
+                    .collect(Collectors.toList());
+                    clienteEditado.getTelefones().addAll(telefones);
+        } else {
+            clienteEditado.getTelefones().clear();
+        }
+
+        // Atualize a lista de endereços
+        if (clienteDTO.listaEndereco() != null && !clienteDTO.listaEndereco().isEmpty()) {
+            clienteEditado.getEndereco().clear();
+            List<Endereco> enderecos = clienteDTO.listaEndereco().stream()
+                    .map(end -> {
+                        Endereco endereco = new Endereco();
+                        endereco.setCep(end.cep());
+                        endereco.setBairro(end.bairro());
+                        endereco.setNumero(end.numero());
+                        endereco.setLogradouro(end.logradouro());
+                        endereco.setComplemento(end.complemento());
+                        Municipio idMunicipio = municipioRepository.findById(end.idMunicipio());
+                        endereco.setMunicipio(idMunicipio);
+
+                        return endereco;
+                    })
+                    .collect(Collectors.toList());
+                    clienteEditado.getEndereco().addAll(enderecos);
+        } else {
+            clienteEditado.getEndereco().clear();
+        } 
+
+        return ClienteResponseDTO.valueOf(clienteEditado);
+    }
+
+    @Override
+    @Transactional
+    public void delete(long id) {
+        clienteRepository.deleteById(id);
+    }
+
+    @Override
+    public ClienteResponseDTO findById(long id) {
+        Cliente cliente = clienteRepository.findById(id);
+        return ClienteResponseDTO.valueOf(cliente);
+    }
+
+    @Override
+    public List<ClienteResponseDTO> findAll(int page, int pageSize, String sort) {
+        List<String> allowedSortFields = List.of("id", "nome");
+
+        String orderByClause = "order by id"; // padrão
+
+        if (sort != null && !sort.isBlank()) {
+            String[] sortParts = sort.trim().split(" ");
+            String field = sortParts[0];
+            String direction = (sortParts.length > 1) ? sortParts[1].toLowerCase(): "asc";
+
+            if (allowedSortFields.contains(field)) {
+                if (direction.equals("desc") || direction.equals("asc")) {
+                    orderByClause = String.format("order by %s %s", field, direction);
+                } else {
+                    orderByClause = String.format("order by %s", field);
+                }
+            }
+        }
+
+        PanacheQuery<Cliente> panacheQuery = clienteRepository.find(orderByClause);
+
+        return panacheQuery.list().stream()
+            .map(ClienteResponseDTO::valueOf)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ClienteResponseDTO> findByNome(String nome, int page, int pageSize, String sort) {
+        List<String> allowedSortFields = List.of("id", "nome");
+
+        String orderByClause = "order by id"; // padrão
+
+        if (sort != null && !sort.isBlank()) {
+            String[] sortParts = sort.trim().split(" ");
+            String field = sortParts[0];
+            String direction = (sortParts.length > 1) ? sortParts[1].toLowerCase() : "asc";
+
+            if (allowedSortFields.contains(field)) {
+                if (direction.equals("desc") || direction.equals("asc")) {
+                    orderByClause = String.format("order by %s %s", field, direction);
+                } else {
+                    orderByClause = String.format("order by %s", field);
+                }
+            }
+        }
+
+        String query = "lower(nome) like lower(:nome) " + orderByClause;
+
+        PanacheQuery<Cliente> panacheQuery = clienteRepository
+            .find(query, Parameters.with("nome", "%" + nome + "%"));
+
+        if (pageSize > 0) {
+            panacheQuery = panacheQuery.page(Page.of(page, pageSize));
+        }
+
+        return panacheQuery.list().stream()
+            .map(ClienteResponseDTO::valueOf)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public long count() {
+        return clienteRepository.findAll().count();
+    }
+
+    @Override
+    public long count(String nome) {
+        return clienteRepository.countByNome(nome);
+    }
+
+    public UsuarioResponseDTO login(String email, String senha) {
+        
+        Cliente cliente = clienteRepository.findByEmailAndSenha(email, senha);
+
+        if (cliente == null) {
+            throw new RuntimeException("Cliente não encontrado");
+        }
+    
+        return UsuarioResponseDTO.valueOf(cliente);
+    }
+
+}

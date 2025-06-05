@@ -76,16 +76,16 @@ INSERT INTO cliente_endereco (id_cliente, id_endereco) VALUES
 (4, 4),
 (4, 5);
 
-INSERT INTO produto (nome, descricao, preco, estoque, desenvolvedora, tipoMidia, genero, classificacao, dataLancamento, capaUrl) VALUES
-('The Last Of Us', 'Descrição teste 1', 150.0, 10, 'Naughty Dog', 1, 8, 6, '2020-03-01', null),
-('God of War', 'Descrição teste 2', 250.0, 10, 'teste2', 2, 4, 3, '2022-05-24', null),
-('Red Dead Redemption 2', 'Descrição teste 3', 85.0, 3, 'Rockstar Games', 1, 1, 6, '2018-07-21', null);
+INSERT INTO produto (nome, descricao, preco, estoque, desenvolvedora, plataforma, tipoMidia, genero, classificacao, dataLancamento) VALUES
+('The Last Of Us', 'Descrição teste 1', 150.0, 10, 'Naughty Dog', 1, 1, 8, 6, '2020-03-01'),
+('God of War', 'Descrição teste 2', 250.0, 10, 'teste2', 2, 2, 4, 3, '2022-05-24'),
+('Red Dead Redemption 2', 'Descrição teste 3', 85.0, 3, 'Rockstar Games', 3, 1, 1, 6, '2018-07-21');
 
 -- Inserção de Pedidos (sem especificar o ID)
-INSERT INTO Pedido (data_hora, id_cliente, id_endereco, valor_total) VALUES
-('2023-11-01 10:30:00', 2, 1, 450.00),
-('2023-11-02 14:15:00', 3, 2, 320.50),
-('2023-11-03 09:45:00', 4, 3, 780.75);
+INSERT INTO Pedido (data_hora, id_cliente, id_endereco, valor_total, status) VALUES
+('2023-11-01 10:30:00', 2, 1, 450.00, 'AGUARDANDO'),
+('2023-11-02 14:15:00', 3, 2, 320.50, 'EM_TRANSITO'),
+('2023-11-03 09:45:00', 4, 3, 780.75, 'ENTREGUE');
 
 -- Inserção de ItensPedido (sem especificar o ID)
 INSERT INTO ItemPedido (valor, quantidade, id_produto, id_pedido) VALUES
