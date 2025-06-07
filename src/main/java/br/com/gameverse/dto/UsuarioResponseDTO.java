@@ -6,7 +6,7 @@ import br.com.gameverse.model.Usuario;
 public record UsuarioResponseDTO(
     Long id,
     String nome,
-    String login,
+    String email,
     Perfil perfil
 ) { 
     public static UsuarioResponseDTO valueOf(Usuario usuario){

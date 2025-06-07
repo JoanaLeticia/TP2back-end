@@ -17,6 +17,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
 @Path("/usuarios")
+//@RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class UsuarioResource {
@@ -24,7 +25,6 @@ public class UsuarioResource {
     UsuarioService service;
 
     @GET
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<UsuarioResponseDTO> buscarTodos(
         @QueryParam("page") @DefaultValue("0") int page,
         @QueryParam("page_size") @DefaultValue("10") int pageSize,
@@ -37,7 +37,6 @@ public class UsuarioResource {
 
     @GET
     @Path("/nome/{nome}")
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<UsuarioResponseDTO> buscarPorNome(
         @PathParam("nome") String nome,
         @QueryParam("page") @DefaultValue("0") int page,
@@ -51,14 +50,12 @@ public class UsuarioResource {
 
     @GET
     @Path("/nome/{nome}/count")
-    @RolesAllowed({ "Admin" })
     public long totalPorNome(@PathParam("nome") String nome) {
         return service.count(nome);
     }
 
     @GET
     @Path("/count")
-    @RolesAllowed({ "Admin" })
     public long total() {
         return service.count();
     }

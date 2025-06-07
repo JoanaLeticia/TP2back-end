@@ -6,6 +6,7 @@ import br.com.gameverse.model.Cliente;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.hibernate.orm.panache.PanacheRepository;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.persistence.TypedQuery;
 
 @ApplicationScoped
 public class ClienteRepository implements PanacheRepository<Cliente> {
@@ -19,6 +20,10 @@ public class ClienteRepository implements PanacheRepository<Cliente> {
 
     public Cliente findByEmail(String email) {
         return find("email", email).firstResult();
+    }
+
+    public boolean existePorEmail(String email) {
+        return count("email", email) > 0;
     }
 
     public Cliente findByEmailAndSenha(String email, String senha) {   

@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/pedidos")
+//@RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class PedidoResource {
@@ -37,7 +38,6 @@ public class PedidoResource {
     JsonWebToken jwt;
 
     @POST
-    @RolesAllowed({"Cliente" })
     public Response incluir(PedidoDTO dto) {
         try {
             String email = jwt.getSubject();
@@ -52,7 +52,6 @@ public class PedidoResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed({ "Cliente",  "Admin" })
     public Response apagar(Long id) {
         try {
             service.delete(id);
@@ -65,14 +64,12 @@ public class PedidoResource {
 
     @GET
     @Path("/count")
-    @RolesAllowed({   "Admin" })
     public long total() {
         return service.count();
     }
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({   "Admin" })
     public Response buscarPorId(Long id) {
         try {
             PedidoResponseDTO a = service.findById(id);
@@ -83,7 +80,6 @@ public class PedidoResource {
     }
 
     @GET
-    @RolesAllowed({   "Admin" })
     public PaginacaoResponse<PedidoResponseDTO> buscarTodos(
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("page_size") @DefaultValue("10") int pageSize,

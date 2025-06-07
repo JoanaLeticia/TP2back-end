@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/estados")
+//@RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class EstadoResource {
@@ -35,20 +36,17 @@ public class EstadoResource {
     EstadoService service;
 
     @GET
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<EstadoResponseDTO> buscarTodos(
-        @QueryParam("page") @DefaultValue("0") int page,
-        @QueryParam("page_size") @DefaultValue("10") int pageSize,
-        @QueryParam("sort") @DefaultValue("id") String sort) {
-        
-        List<EstadoResponseDTO> estados = service.findAll(page, pageSize, sort);
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("page_size") @DefaultValue("10") int pageSize) {
+
+        List<EstadoResponseDTO> estados = service.findAll(page, pageSize);
         long total = service.count();
         return new PaginacaoResponse<>(estados, page, pageSize, total);
     }
 
     @GET
-    @Path("/nome/{nome}")
-    @RolesAllowed({ "Admin" })
+    @Path("search/nome/{nome}")
     public PaginacaoResponse<EstadoResponseDTO> buscarPorNome(
         @PathParam("nome") String nome,
         @QueryParam("page") @DefaultValue("0") int page,
@@ -62,15 +60,13 @@ public class EstadoResource {
 
     @GET
     @Path("/nome/{nome}/count")
-    @RolesAllowed({ "Admin" })
     public long totalPorNome(@PathParam("nome") String nome) {
         return service.count(nome);
     }
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
-    public Response buscarPorId(Long id) {
+    public Response buscarPorId(@PathParam("id") Long id) {
         try {
             EstadoResponseDTO a = service.findById(id);
             return Response.ok(a).build();
@@ -81,7 +77,6 @@ public class EstadoResource {
 
     @GET
     @Path("/sigla/{sigla}")
-    @RolesAllowed({ "Admin" })
     public Response buscarPorSigla(String sigla) { 
         try {
             return Response.ok(service.findBySigla(sigla)).build();
@@ -91,7 +86,6 @@ public class EstadoResource {
     }
 
     @POST
-    @RolesAllowed({ "Admin" })
     public Response incluir(EstadoDTO dto) {
         try {
             return Response.status(Status.CREATED).entity(service.create(dto)).build();
@@ -103,7 +97,6 @@ public class EstadoResource {
 
     @PUT
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response alterar(EstadoDTO dto, @PathParam("id") Long id) {
         try {
             service.update(dto, id);
@@ -117,7 +110,6 @@ public class EstadoResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed({ "Admin" })
     public Response apagar(Long id) {
         try {
             service.delete(id);
@@ -130,7 +122,6 @@ public class EstadoResource {
 
     @GET
     @Path("/count")
-    @RolesAllowed({ "Admin" })
     public long total() {
         return service.count();
     }

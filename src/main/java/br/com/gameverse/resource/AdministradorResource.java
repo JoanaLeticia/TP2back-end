@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/administradores")
+//@RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class AdministradorResource {
@@ -35,7 +36,6 @@ public class AdministradorResource {
 
     @POST
     @Transactional
-    @RolesAllowed({ "Admin" })
     public Response incluir(AdministradorDTO dto) {
         try {
             AdministradorResponseDTO retorno = service.create(dto);
@@ -49,7 +49,6 @@ public class AdministradorResource {
     @PUT
     @Transactional
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response alterar(AdministradorDTO dto, @PathParam("id") Long id) {
         try {
             service.update(dto, id);
@@ -63,7 +62,6 @@ public class AdministradorResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed({ "Admin" })
     public Response apagar(@PathParam("id") Long id) {
         try {
             service.delete(id);
@@ -76,14 +74,12 @@ public class AdministradorResource {
 
     @GET
     @Path("/count")
-    @RolesAllowed({ "Admin" })
     public long total() {
         return service.count();
     }
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response buscarPorId(@PathParam("id") Long id) {
         try {
             AdministradorResponseDTO administrador = service.findById(id);
@@ -95,26 +91,22 @@ public class AdministradorResource {
 
     @GET
     @Path("/nome/{nome}/count")
-    @RolesAllowed({ "Admin" })
     public long totalPorNome(@PathParam("nome") String nome) {
         return service.count(nome);
     }
 
     @GET
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<AdministradorResponseDTO> buscarTodos(
-        @QueryParam("page") @DefaultValue("0") int page,
-        @QueryParam("page_size") @DefaultValue("10") int pageSize,
-        @QueryParam("sort") @DefaultValue("id") String sort) {
-        
-        List<AdministradorResponseDTO> administradores = service.findAll(page, pageSize, sort); // Método ajustado para DTO
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("page_size") @DefaultValue("10") int pageSize) {
+
+        List<AdministradorResponseDTO> admins = service.findAll(page, pageSize);
         long total = service.count();
-        return new PaginacaoResponse<>(administradores, page, pageSize, total);
+        return new PaginacaoResponse<>(admins, page, pageSize, total);
     }
 
     @GET
-    @Path("/nome/{nome}")
-    @RolesAllowed({ "Admin" })
+    @Path("search/nome/{nome}")
     public PaginacaoResponse<AdministradorResponseDTO> buscarPorNome(
         @PathParam("nome") String nome,
         @QueryParam("page") @DefaultValue("0") int page,

@@ -7,10 +7,14 @@ import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
 
 import br.com.gameverse.application.Result;
+import br.com.gameverse.dto.PaginacaoResponse;
 import br.com.gameverse.dto.ProdutoDTO;
 import br.com.gameverse.dto.ProdutoResponseDTO;
 import br.com.gameverse.form.ProdutoImageForm;
+import br.com.gameverse.model.ClassificacaoIndicativa;
+import br.com.gameverse.model.Genero;
 import br.com.gameverse.model.Plataforma;
+import br.com.gameverse.model.TipoMidia;
 import br.com.gameverse.service.FileService;
 import br.com.gameverse.service.ProdutoService;
 import jakarta.annotation.security.RolesAllowed;
@@ -35,6 +39,7 @@ import jakarta.ws.rs.core.Response.Status;
 import jakarta.ws.rs.core.Response.ResponseBuilder;
 
 @Path("/produtos")
+// @RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ProdutoResource {
@@ -47,20 +52,17 @@ public class ProdutoResource {
     private static final Logger LOG = Logger.getLogger(ProdutoResource.class);
 
     @GET
-    // @RolesAllowed({ "Admin" })
-    public List<ProdutoResponseDTO> buscarTodos(
+    public PaginacaoResponse<ProdutoResponseDTO> buscarTodos(
             @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("page_size") @DefaultValue("10") int pageSize,
-            @QueryParam("sort") @DefaultValue("id") String sort) {
+            @QueryParam("page_size") @DefaultValue("10") int pageSize) {
 
-        LOG.info("Buscando todos os produtos");
-        LOG.debug("ERRO DE DEBUG");
-        return service.findAll(page, pageSize, sort);
+        List<ProdutoResponseDTO> produtos = service.findAll(page, pageSize);
+        long total = service.count();
+        return new PaginacaoResponse<>(produtos, page, pageSize, total);
     }
 
     @GET
-    @Path("/nome/{nome}")
-    @RolesAllowed({ "Admin" })
+    @Path("search/nome/{nome}")
     public List<ProdutoResponseDTO> buscarPorNome(
             @PathParam("nome") String nome,
             @QueryParam("page") @DefaultValue("0") int page,
@@ -73,7 +75,6 @@ public class ProdutoResource {
 
     @GET
     @Path("/{id}")
-    // @RolesAllowed({ "Admin" })
     public Response buscarPorId(@PathParam("id") Long id) {
         try {
             LOG.infof("Buscando Produto por ID (%d)", id);
@@ -87,7 +88,6 @@ public class ProdutoResource {
     }
 
     @POST
-    @RolesAllowed({ "Admin" })
     public Response incluir(ProdutoDTO dto) {
         try {
             LOG.infof("Inserindo um produto: %s", dto.nome());
@@ -102,7 +102,6 @@ public class ProdutoResource {
 
     @PUT
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response alterar(ProdutoDTO dto, @PathParam("id") Long id) {
         try {
             LOG.info("Atualizando produto");
@@ -119,7 +118,6 @@ public class ProdutoResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed({ "Admin" })
     public Response apagar(Long id) {
         try {
             LOG.info("Deletando o produto.");
@@ -135,14 +133,12 @@ public class ProdutoResource {
 
     @GET
     @Path("/count")
-    @RolesAllowed({ "Admin" })
     public long total() {
         return service.count();
     }
 
     @GET
     @Path("/nome/{nome}/count")
-    @RolesAllowed({ "Admin" })
     public long totalPorNome(@PathParam("nome") String nome) {
         return service.count(nome);
     }
@@ -158,7 +154,6 @@ public class ProdutoResource {
 
     @PATCH
     @Path("/image/upload")
-    @RolesAllowed({ "Admin" })
     @Consumes(MediaType.MULTIPART_FORM_DATA)
     public Response salvarImagem(@MultipartForm ProdutoImageForm form) {
         try {
@@ -171,8 +166,35 @@ public class ProdutoResource {
 
     @GET
     @Path("/plataformas")
-    @RolesAllowed({ "Admin" })
     public Response getPlataformas() {
         return Response.ok(Plataforma.values()).build();
     }
+
+    @GET
+    @Path("/tiposMidia")
+    public Response getTiposMidia() {
+        return Response.ok(TipoMidia.values()).build();
+    }
+
+    @GET
+    @Path("/generos")
+    public Response getGeneros() {
+        return Response.ok(Genero.values()).build();
+    }
+
+    @GET
+    @Path("/classificacoes")
+    public Response getClassificacoes() {
+        return Response.ok(ClassificacaoIndicativa.values()).build();
+    }
+
+    @GET
+    @Path("/plataforma/{nome}")
+    public List<ProdutoResponseDTO> buscarPorPlataforma(@PathParam("nome") String nomePlataforma,
+        @QueryParam("page") @DefaultValue("0") int page,
+        @QueryParam("size") @DefaultValue("10") int size,
+        @QueryParam("sort") @DefaultValue("id asc") String sort) {
+        return service.buscarPorPlataforma(nomePlataforma, page, size, sort);
+    }
+
 }

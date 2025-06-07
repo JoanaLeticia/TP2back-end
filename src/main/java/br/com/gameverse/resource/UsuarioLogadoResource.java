@@ -25,6 +25,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
 @Path("/usuariologado")
+//@RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class UsuarioLogadoResource {
@@ -48,7 +49,6 @@ public class UsuarioLogadoResource {
 
 
     @GET
-    @RolesAllowed({ "Cliente", "Admin" })
     public Response getUsuario() {
         // obtendo o login pelo token jwt
         String login = jwt.getSubject();
@@ -65,7 +65,6 @@ public class UsuarioLogadoResource {
     @PATCH
     @Transactional
     @Path("/updateNome/{nome}")
-    @RolesAllowed({ "Cliente", "Admin" })
     public Response updateNome(@PathParam("nome") String nome) {
         String login = jwt.getSubject();
         try {
@@ -81,7 +80,6 @@ public class UsuarioLogadoResource {
     @PATCH
     @Transactional
     @Path("/updateSenha/{senha}")
-    @RolesAllowed({ "Cliente", "Admin" })
     public Response updateSenha(@PathParam("senha") String senha) {
         String login = jwt.getSubject();
         try {
@@ -95,7 +93,6 @@ public class UsuarioLogadoResource {
     }
 
     @GET
-    @RolesAllowed({ "Cliente", "Admin" })
     @Path("/PedidosDoUsuario")
     public Response getPedidosUsuario() {
         String login = jwt.getSubject();
@@ -110,7 +107,6 @@ public class UsuarioLogadoResource {
     }
 
     @GET
-    @RolesAllowed({ "Cliente", "Admin" })
     @Path("/ItensDasComprasUsuario")
     public Response getItensPedidosUsuario() {
         String login = jwt.getSubject();

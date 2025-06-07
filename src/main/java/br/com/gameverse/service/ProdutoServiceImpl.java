@@ -7,11 +7,13 @@ import java.util.stream.Collectors;
 import br.com.gameverse.dto.ProdutoDTO;
 import br.com.gameverse.dto.ProdutoResponseDTO;
 import br.com.gameverse.model.ClassificacaoIndicativa;
+import br.com.gameverse.model.Estado;
 import br.com.gameverse.model.Genero;
 import br.com.gameverse.model.Plataforma;
 import br.com.gameverse.model.Produto;
 import br.com.gameverse.model.TipoMidia;
 import br.com.gameverse.repository.ProdutoRepository;
+import br.com.gameverse.resource.ProdutoResource;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
@@ -42,7 +44,7 @@ public class ProdutoServiceImpl implements ProdutoService {
         novoProduto.setEstoque(produto.estoque());
         novoProduto.setDesenvolvedora(produto.desenvolvedora());
         novoProduto.setPlataforma(Plataforma.valueOf(produto.idPlataforma()));
-        novoProduto.setTipoMidia(TipoMidia.valueOf(produto.idTipoMidia()));   
+        novoProduto.setTipoMidia(TipoMidia.valueOf(produto.idTipoMidia()));
         novoProduto.setGenero(Genero.valueOf(produto.idGenero()));
         novoProduto.setClassificacao(ClassificacaoIndicativa.valueOf(produto.idClassificacao()));
         novoProduto.setDataLancamento(produto.dataLancamento());
@@ -102,34 +104,9 @@ public class ProdutoServiceImpl implements ProdutoService {
     }
 
     @Override
-    public List<ProdutoResponseDTO> findAll(int page, int pageSize, String sort) {
-        List<String> allowedSortFields = List.of("id", "nome", "preco", "estoque");
-
-        String orderByClause = "order by id"; // padrão
-
-        if (sort != null && !sort.isBlank()) {
-            String[] sortParts = sort.trim().split(" ");
-            String field = sortParts[0];
-            String direction = (sortParts.length > 1) ? sortParts[1].toLowerCase() : "asc";
-
-            if (allowedSortFields.contains(field)) {
-                if (direction.equals("desc") || direction.equals("asc")) {
-                    orderByClause = String.format("order by %s %s", field, direction);
-                } else {
-                    orderByClause = String.format("order by %s", field);
-                }
-            }
-        }
-
-        PanacheQuery<Produto> panacheQuery = produtoRepository.find(orderByClause);
-
-        if (pageSize > 0) {
-            panacheQuery = panacheQuery.page(Page.of(page, pageSize));
-        }
-
-        return panacheQuery.list().stream()
-            .map(ProdutoResponseDTO::valueOf)
-            .collect(Collectors.toList());
+    public List<ProdutoResponseDTO> findAll(int page, int pageSize) {
+        List<Produto> list = produtoRepository.findAll().page(page, pageSize).list();
+        return list.stream().map(e -> ProdutoResponseDTO.valueOf(e)).collect(Collectors.toList());
     }
 
     @Override
@@ -155,15 +132,56 @@ public class ProdutoServiceImpl implements ProdutoService {
         String query = "lower(nome) like lower(:nome) " + orderByClause;
 
         PanacheQuery<Produto> panacheQuery = produtoRepository
-            .find(query, Parameters.with("nome", "%" + nome + "%"));
+                .find(query, Parameters.with("nome", "%" + nome + "%"));
 
         if (pageSize > 0) {
             panacheQuery = panacheQuery.page(Page.of(page, pageSize));
         }
 
         return panacheQuery.list().stream()
-            .map(ProdutoResponseDTO::valueOf)
-            .collect(Collectors.toList());
+                .map(ProdutoResponseDTO::valueOf)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ProdutoResponseDTO> buscarPorPlataforma(String nomePlataforma, int page, int pageSize, String sort) {
+        List<String> allowedSortFields = List.of("id", "nome", "preco", "estoque");
+
+        String orderByClause = "order by id"; // padrão
+
+        if (sort != null && !sort.isBlank()) {
+            String[] sortParts = sort.trim().split(" ");
+            String field = sortParts[0];
+            String direction = (sortParts.length > 1) ? sortParts[1].toLowerCase() : "asc";
+
+            if (allowedSortFields.contains(field)) {
+                if (direction.equals("desc") || direction.equals("asc")) {
+                    orderByClause = String.format("order by %s %s", field, direction);
+                } else {
+                    orderByClause = String.format("order by %s", field);
+                }
+            }
+        }
+
+        try {
+            Plataforma plataforma = Plataforma.valueOf(nomePlataforma.toUpperCase());
+
+            String query = "plataforma = :plataforma " + orderByClause;
+
+            PanacheQuery<Produto> panacheQuery = produtoRepository.find(query,
+                    Parameters.with("plataforma", plataforma));
+
+            if (pageSize > 0) {
+                panacheQuery = panacheQuery.page(Page.of(page, pageSize));
+            }
+
+            return panacheQuery.list().stream()
+                    .map(ProdutoResponseDTO::valueOf)
+                    .collect(Collectors.toList());
+
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Plataforma inválida: " + nomePlataforma);
+        }
     }
 
     @Override

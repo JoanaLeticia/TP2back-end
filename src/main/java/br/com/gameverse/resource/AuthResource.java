@@ -1,6 +1,7 @@
 package br.com.gameverse.resource;
 
 import br.com.gameverse.dto.AuthUsuarioDTO;
+import br.com.gameverse.dto.ClienteDTO;
 import br.com.gameverse.dto.UsuarioResponseDTO;
 import br.com.gameverse.model.Perfil;
 import br.com.gameverse.service.AdministradorService;
@@ -42,7 +43,7 @@ public class AuthResource {
         if (dto.perfil() == Perfil.ADMIN) {
             usuario = administradorService.login(dto.login(), hash);
         } else if (dto.perfil() == Perfil.CLIENTE) { // cliente
-            usuario = clienteService.login(dto.login(), hash);   
+            usuario = clienteService.login(dto.login(), hash);
         } else {
             return Response.status(Status.NOT_FOUND).build();
         }
@@ -52,9 +53,35 @@ public class AuthResource {
         }
 
         return Response.ok(usuario)
-            .header("Authorization", jwtService.generateJwt(usuario))
-            .build();
+                .header("Authorization", jwtService.generateJwt(usuario))
+                .build();
     }
 
+    @POST
+    @Path("/registrar")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response registrar(ClienteDTO clienteDTO) {
+        try {
+            // Validação básica (opcional)
+            if (clienteDTO.email() == null || clienteDTO.senha() == null) {
+                return Response.status(Status.BAD_REQUEST)
+                        .entity("Email e senha são obrigatórios").build();
+            }
+
+            // Delega para o serviço de autenticação
+            UsuarioResponseDTO usuarioRegistrado = clienteService.registrar(clienteDTO);
+
+            return Response.status(Status.CREATED)
+                    .entity(usuarioRegistrado)
+                    .build();
+        } catch (RuntimeException e) {
+            return Response.status(Status.CONFLICT)
+                    .entity(e.getMessage()).build();
+        } catch (Exception e) {
+            return Response.status(Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erro durante o registro").build();
+        }
+    }
 
 }

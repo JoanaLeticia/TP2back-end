@@ -4,6 +4,7 @@ import java.util.List;
 
 import br.com.gameverse.dto.AdministradorDTO;
 import br.com.gameverse.dto.AdministradorResponseDTO;
+import br.com.gameverse.dto.ClienteResponseDTO;
 import br.com.gameverse.dto.UsuarioResponseDTO;
 
 public interface AdministradorService {
@@ -11,7 +12,7 @@ public interface AdministradorService {
     AdministradorResponseDTO update(AdministradorDTO administradorDTO, Long id);
     void delete(long id);
     AdministradorResponseDTO findById(long id);
-    List<AdministradorResponseDTO> findAll(int page, int pageSize, String sort);
+    List<AdministradorResponseDTO> findAll(int page, int pageSize);
     List<AdministradorResponseDTO> findByNome(String nome, int page, int pageSize, String sort);
     long count();
     long count(String nome);

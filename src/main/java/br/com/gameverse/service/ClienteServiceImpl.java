@@ -29,6 +29,9 @@ public class ClienteServiceImpl implements ClienteService {
     @Inject
     MunicipioRepository municipioRepository;
 
+    @Inject
+    HashService hashService;
+
     @Override
     @Transactional
     public ClienteResponseDTO create(ClienteDTO cliente) {
@@ -54,7 +57,7 @@ public class ClienteServiceImpl implements ClienteService {
             novoCliente.setTelefones(Collections.emptyList());
         }
 
-        //  Configure a lista de endereços
+        // Configure a lista de endereços
         if (cliente.listaEndereco() != null && !cliente.listaEndereco().isEmpty()) {
             List<Endereco> enderecos = cliente.listaEndereco().stream()
                     .map(end -> {
@@ -75,7 +78,7 @@ public class ClienteServiceImpl implements ClienteService {
             novoCliente.setPerfil(Perfil.CLIENTE);
         } else {
             novoCliente.setEndereco(Collections.emptyList());
-        } 
+        }
 
         clienteRepository.persist(novoCliente);
 
@@ -93,7 +96,7 @@ public class ClienteServiceImpl implements ClienteService {
         clienteEditado.setPerfil(Perfil.CLIENTE);
         clienteEditado.setCpf(clienteDTO.cpf());
         clienteEditado.setDataNascimento(clienteDTO.dataNascimento());
-        
+
         if (clienteDTO.listaTelefone() != null && !clienteDTO.listaTelefone().isEmpty()) {
             clienteEditado.getTelefones().clear();
             List<Telefone> telefones = clienteDTO.listaTelefone().stream()
@@ -104,7 +107,7 @@ public class ClienteServiceImpl implements ClienteService {
                         return telefone;
                     })
                     .collect(Collectors.toList());
-                    clienteEditado.getTelefones().addAll(telefones);
+            clienteEditado.getTelefones().addAll(telefones);
         } else {
             clienteEditado.getTelefones().clear();
         }
@@ -126,10 +129,10 @@ public class ClienteServiceImpl implements ClienteService {
                         return endereco;
                     })
                     .collect(Collectors.toList());
-                    clienteEditado.getEndereco().addAll(enderecos);
+            clienteEditado.getEndereco().addAll(enderecos);
         } else {
             clienteEditado.getEndereco().clear();
-        } 
+        }
 
         return ClienteResponseDTO.valueOf(clienteEditado);
     }
@@ -147,30 +150,9 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Override
-    public List<ClienteResponseDTO> findAll(int page, int pageSize, String sort) {
-        List<String> allowedSortFields = List.of("id", "nome");
-
-        String orderByClause = "order by id"; // padrão
-
-        if (sort != null && !sort.isBlank()) {
-            String[] sortParts = sort.trim().split(" ");
-            String field = sortParts[0];
-            String direction = (sortParts.length > 1) ? sortParts[1].toLowerCase(): "asc";
-
-            if (allowedSortFields.contains(field)) {
-                if (direction.equals("desc") || direction.equals("asc")) {
-                    orderByClause = String.format("order by %s %s", field, direction);
-                } else {
-                    orderByClause = String.format("order by %s", field);
-                }
-            }
-        }
-
-        PanacheQuery<Cliente> panacheQuery = clienteRepository.find(orderByClause);
-
-        return panacheQuery.list().stream()
-            .map(ClienteResponseDTO::valueOf)
-            .collect(Collectors.toList());
+    public List<ClienteResponseDTO> findAll(int page, int pageSize) {
+        List<Cliente> list = clienteRepository.findAll().page(page, pageSize).list();
+        return list.stream().map(e -> ClienteResponseDTO.valueOf(e)).collect(Collectors.toList());
     }
 
     @Override
@@ -196,15 +178,15 @@ public class ClienteServiceImpl implements ClienteService {
         String query = "lower(nome) like lower(:nome) " + orderByClause;
 
         PanacheQuery<Cliente> panacheQuery = clienteRepository
-            .find(query, Parameters.with("nome", "%" + nome + "%"));
+                .find(query, Parameters.with("nome", "%" + nome + "%"));
 
         if (pageSize > 0) {
             panacheQuery = panacheQuery.page(Page.of(page, pageSize));
         }
 
         return panacheQuery.list().stream()
-            .map(ClienteResponseDTO::valueOf)
-            .collect(Collectors.toList());
+                .map(ClienteResponseDTO::valueOf)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -218,14 +200,41 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     public UsuarioResponseDTO login(String email, String senha) {
-        
+
         Cliente cliente = clienteRepository.findByEmailAndSenha(email, senha);
 
         if (cliente == null) {
             throw new RuntimeException("Cliente não encontrado");
         }
-    
+
         return UsuarioResponseDTO.valueOf(cliente);
+    }
+
+    @Override
+    @Transactional
+    public UsuarioResponseDTO registrar(ClienteDTO clienteDTO) {
+        if (clienteRepository.existePorEmail(clienteDTO.email())) {
+            throw new RuntimeException("Email já cadastrado!");
+        }
+
+        Cliente novoCliente = new Cliente();
+        novoCliente.setNome(clienteDTO.nome());
+        novoCliente.setEmail(clienteDTO.email());
+        novoCliente.setSenha(hashService.getHashSenha(clienteDTO.senha()));
+        novoCliente.setPerfil(Perfil.CLIENTE);
+        novoCliente.setCpf(clienteDTO.cpf());
+        novoCliente.setDataNascimento(clienteDTO.dataNascimento());
+
+        novoCliente.setTelefones(null);
+        novoCliente.setEndereco(null);
+
+        clienteRepository.persist(novoCliente);
+
+        return new UsuarioResponseDTO(
+                novoCliente.getId(),
+                novoCliente.getNome(),
+                novoCliente.getEmail(),
+                novoCliente.getPerfil());
     }
 
 }

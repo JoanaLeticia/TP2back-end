@@ -6,6 +6,7 @@ import br.com.gameverse.application.Result;
 import br.com.gameverse.dto.ClienteDTO;
 import br.com.gameverse.dto.ClienteResponseDTO;
 import br.com.gameverse.dto.PaginacaoResponse;
+import br.com.gameverse.dto.UsuarioResponseDTO;
 import br.com.gameverse.service.ClienteService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -27,15 +28,15 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/clientes")
+// @RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class ClienteResource {
-    
+
     @Inject
     ClienteService service;
 
     @POST
-    @RolesAllowed({ "Admin" })
     public Response incluir(ClienteDTO dto) {
         try {
             return Response.status(Status.CREATED).entity(service.create(dto)).build();
@@ -47,7 +48,6 @@ public class ClienteResource {
 
     @PUT
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response alterar(ClienteDTO dto, @PathParam("id") Long id) {
         try {
             service.update(dto, id);
@@ -61,7 +61,6 @@ public class ClienteResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed({ "Admin" })
     public Response apagar(@PathParam("id") Long id) {
         try {
             service.delete(id);
@@ -74,14 +73,12 @@ public class ClienteResource {
 
     @GET
     @Path("/count")
-    @RolesAllowed({ "Admin" })
     public long total() {
         return service.count();
     }
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response buscarPorId(@PathParam("id") Long id) {
         try {
             ClienteResponseDTO a = service.findById(id);
@@ -92,26 +89,23 @@ public class ClienteResource {
     }
 
     @GET
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<ClienteResponseDTO> buscarTodos(
-        @QueryParam("page") @DefaultValue("0") int page,
-        @QueryParam("page_size") @DefaultValue("10") int pageSize,
-        @QueryParam("sort") @DefaultValue("id") String sort) {
-        
-        List<ClienteResponseDTO> clientes = service.findAll(page, pageSize, sort);
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("page_size") @DefaultValue("10") int pageSize) {
+
+        List<ClienteResponseDTO> clientes = service.findAll(page, pageSize);
         long total = service.count();
         return new PaginacaoResponse<>(clientes, page, pageSize, total);
     }
 
     @GET
-    @Path("/nome/{nome}")
-    @RolesAllowed({ "Admin" })
+    @Path("search/nome/{nome}")
     public PaginacaoResponse<ClienteResponseDTO> buscarPorNome(
-        @PathParam("nome") String nome,
-        @QueryParam("page") @DefaultValue("0") int page,
-        @QueryParam("page_size") @DefaultValue("10") int pageSize,
-        @QueryParam("sort") @DefaultValue("id") String sort) {
-        
+            @PathParam("nome") String nome,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("page_size") @DefaultValue("10") int pageSize,
+            @QueryParam("sort") @DefaultValue("id") String sort) {
+
         List<ClienteResponseDTO> clientes = service.findByNome(nome, page, pageSize, sort);
         long total = service.count(nome);
         return new PaginacaoResponse<>(clientes, page, pageSize, total);

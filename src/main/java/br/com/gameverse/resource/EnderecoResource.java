@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/enderecos")
+//@RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class EnderecoResource {
@@ -34,7 +35,6 @@ public class EnderecoResource {
     EnderecoService service;
 
     @GET
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<EnderecoResponseDTO> buscarTodos(
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("page_size") @DefaultValue("10") int pageSize,
@@ -45,8 +45,7 @@ public class EnderecoResource {
     }
 
     @GET
-    @Path("/logradouro/{logradouro}")
-    @RolesAllowed({ "Admin" })
+    @Path("search/logradouro/{logradouro}")
     public PaginacaoResponse<EnderecoResponseDTO> buscarPorLogradouro(
             @PathParam("logradouro") String logradouro,
             @QueryParam("page") @DefaultValue("0") int page,
@@ -60,7 +59,6 @@ public class EnderecoResource {
 
     @GET
     @Path("/municipio/{idMunicipio}")
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<EnderecoResponseDTO> buscarPorMunicipio(
             @PathParam("idMunicipio") Long idMunicipio,
             @QueryParam("page") @DefaultValue("0") int page,
@@ -73,7 +71,6 @@ public class EnderecoResource {
 
     @GET
     @Path("/bairro/{bairro}")
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<EnderecoResponseDTO> buscarPorBairro(
             @PathParam("bairro") String bairro,
             @QueryParam("page") @DefaultValue("0") int page,
@@ -86,7 +83,6 @@ public class EnderecoResource {
 
     @GET
     @Path("/logradouro/{logradouro}/count")
-    @RolesAllowed({ "Admin" })
     public Response totalPorLogradouro(@PathParam("logradouro") String logradouro) {
         try {
             return Response.ok(service.findByLogradouro(logradouro, 0, 0, logradouro)).build();
@@ -97,7 +93,6 @@ public class EnderecoResource {
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response buscarPorId(@PathParam("id") Long id) {
         try {
             EnderecoResponseDTO a = service.findById(id);
@@ -108,7 +103,6 @@ public class EnderecoResource {
     }
 
     @POST
-    @RolesAllowed({ "Admin" })
     public Response incluir(EnderecoDTO dto) {
         try {
             return Response.status(Status.CREATED).entity(service.create(dto)).build();
@@ -120,7 +114,6 @@ public class EnderecoResource {
 
     @PUT
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response alterar(EnderecoDTO dto, @PathParam("id") Long id) {
         try {
             service.update(dto, id);
@@ -134,7 +127,6 @@ public class EnderecoResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed({ "Admin" })
     public Response apagar(@PathParam("id") Long id) {
         try {
             service.delete(id);
@@ -147,7 +139,6 @@ public class EnderecoResource {
 
     @GET
     @Path("/count")
-    @RolesAllowed({ "Admin" })
     public long total() {
         return service.count();
     }

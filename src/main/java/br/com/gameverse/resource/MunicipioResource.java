@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/municipios")
+//@RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class MunicipioResource {
@@ -34,7 +35,6 @@ public class MunicipioResource {
     MunicipioService service;
 
     @GET
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<MunicipioResponseDTO> buscarTodos(
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("page_size") @DefaultValue("10") int pageSize,
@@ -45,8 +45,8 @@ public class MunicipioResource {
     }
 
     @GET
-    @Path("/nome/{nome}")
-    @RolesAllowed({ "Admin" })
+    @Path("search/nome/{nome}")
+    //@RolesAllowed({ "Admin" })
     public PaginacaoResponse<MunicipioResponseDTO> buscarPorNome(
             @PathParam("nome") String nome,
             @QueryParam("page") @DefaultValue("0") int page,
@@ -60,14 +60,12 @@ public class MunicipioResource {
 
     @GET
     @Path("/nome/{nome}/count")
-    @RolesAllowed({ "Admin" })
     public long totalPorNome(@PathParam("nome") String nome) {
         return service.count(nome);
     }
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response buscarPorId(Long id) {
         try {
             MunicipioResponseDTO a = service.findById(id);
@@ -79,7 +77,7 @@ public class MunicipioResource {
 
     @GET
     @Path("/estados/{idEstado}")
-    @RolesAllowed({ "Admin" })
+    //@RolesAllowed({ "Admin" })
     public PaginacaoResponse<MunicipioResponseDTO> buscarPorEstado(
             @PathParam("idEstado") Long idEstado,
             @QueryParam("page") @DefaultValue("0") int page,
@@ -92,7 +90,6 @@ public class MunicipioResource {
     }
 
     @POST
-    @RolesAllowed({ "Admin" })
     public Response incluir(MunicipioDTO dto) {
         try {
             return Response.status(Status.CREATED).entity(service.create(dto)).build();
@@ -104,7 +101,6 @@ public class MunicipioResource {
 
     @PUT
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response alterar(MunicipioDTO dto, @PathParam("id") Long id) {
         try {
             service.update(dto, id);
@@ -118,7 +114,6 @@ public class MunicipioResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed({ "Admin" })
     public Response apagar(Long id) {
         try {
             service.delete(id);
@@ -131,7 +126,6 @@ public class MunicipioResource {
 
     @GET
     @Path("/count")
-    @RolesAllowed({ "Admin" })
     public long total() {
         return service.count();
     }

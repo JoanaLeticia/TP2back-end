@@ -12,8 +12,9 @@ public interface ProdutoService {
     void delete(long id);
     ProdutoResponseDTO salvarImagem(Long id, String nomeImagem);
     ProdutoResponseDTO findById(long id);
-    List<ProdutoResponseDTO> findAll(int page, int pageSize, String sort);
+    List<ProdutoResponseDTO> findAll(int page, int pageSize);
     List<ProdutoResponseDTO> findByNome(String nome, int page, int pageSize, String sort);
+    List<ProdutoResponseDTO> buscarPorPlataforma(String nomePlataforma, int page, int pageSize, String sort);
     long count();
     long count(String nome);
 }

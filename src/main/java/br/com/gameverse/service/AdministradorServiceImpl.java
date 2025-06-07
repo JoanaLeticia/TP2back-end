@@ -5,8 +5,10 @@ import java.util.stream.Collectors;
 
 import br.com.gameverse.dto.AdministradorDTO;
 import br.com.gameverse.dto.AdministradorResponseDTO;
+import br.com.gameverse.dto.ClienteResponseDTO;
 import br.com.gameverse.dto.UsuarioResponseDTO;
 import br.com.gameverse.model.Administrador;
+import br.com.gameverse.model.Cliente;
 import br.com.gameverse.model.Perfil;
 import br.com.gameverse.repository.AdministradorRepository;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
@@ -66,30 +68,9 @@ public class AdministradorServiceImpl implements AdministradorService {
     }
 
     @Override
-    public List<AdministradorResponseDTO> findAll(int page, int pageSize, String sort) {
-        List<String> allowedSortFields = List.of("id", "nome");
-
-        String orderByClause = "order by id"; // padrão
-
-        if (sort != null && !sort.isBlank()) {
-            String[] sortParts = sort.trim().split(" ");
-            String field = sortParts[0];
-            String direction = (sortParts.length > 1) ? sortParts[1].toLowerCase(): "asc";
-
-            if (allowedSortFields.contains(field)) {
-                if (direction.equals("desc") || direction.equals("asc")) {
-                    orderByClause = String.format("order by %s %s", field, direction);
-                } else {
-                    orderByClause = String.format("order by %s", field);
-                }
-            }
-        }
-
-        PanacheQuery<Administrador> panacheQuery = administradorRepository.find(orderByClause);
-
-        return panacheQuery.list().stream()
-            .map(AdministradorResponseDTO::valueOf)
-            .collect(Collectors.toList());
+    public List<AdministradorResponseDTO> findAll(int page, int pageSize) {
+        List<Administrador> list = administradorRepository.findAll().page(page, pageSize).list();
+        return list.stream().map(e -> AdministradorResponseDTO.valueOf(e)).collect(Collectors.toList());
     }
 
     @Override

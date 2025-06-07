@@ -28,7 +28,7 @@ public class JwtServiceImpl implements JwtService {
         }
 
         return Jwt.issuer("unitins-jwt")
-            .subject(dto.login())
+            .subject(dto.email())
             .groups(roles)
             .expiresAt(expiryDate)
             .sign();

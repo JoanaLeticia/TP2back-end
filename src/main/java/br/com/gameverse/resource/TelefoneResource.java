@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/telefones")
+//@RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class TelefoneResource {
@@ -34,7 +35,6 @@ public class TelefoneResource {
     TelefoneService service;
 
     @GET
-    @RolesAllowed({ "Admin" })
     public PaginacaoResponse<TelefoneResponseDTO> buscarTodos(
         @QueryParam("page") @DefaultValue("0") int page,
         @QueryParam("page_size") @DefaultValue("10") int pageSize,
@@ -46,8 +46,7 @@ public class TelefoneResource {
     }
 
     @GET
-    @Path("/numero/{numero}")
-    @RolesAllowed({ "Admin" })
+    @Path("search/numero/{numero}")
     public PaginacaoResponse<TelefoneResponseDTO> buscarPorNumero(
         @PathParam("numero") String numero,
         @QueryParam("page") @DefaultValue("0") int page,
@@ -61,14 +60,12 @@ public class TelefoneResource {
 
     @GET
     @Path("/numero/{numero}/count")
-    @RolesAllowed({ "Admin" })
     public long totalPorNumero(@PathParam("numero") String numero) {
         return service.count(numero);
     }
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response buscarPorId(Long id) {
         try {
             TelefoneResponseDTO a = service.findById(id);
@@ -79,7 +76,6 @@ public class TelefoneResource {
     }
 
     @POST
-    @RolesAllowed({ "Admin" })
     public Response incluir(TelefoneDTO dto) {
         try {
             return Response.status(Status.CREATED).entity(service.create(dto)).build();
@@ -91,7 +87,6 @@ public class TelefoneResource {
 
     @PUT
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response alterar(TelefoneDTO dto, @PathParam("id") Long id) {
         try {
             service.update(dto, id);
@@ -105,7 +100,6 @@ public class TelefoneResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    @RolesAllowed({ "Admin" })
     public Response apagar(@PathParam("id") Long id) {
         try {
             service.delete(id);
@@ -118,7 +112,6 @@ public class TelefoneResource {
 
     @GET
     @Path("/count")
-    @RolesAllowed({ "Admin" })
     public long total() {
         return service.count();
     }
