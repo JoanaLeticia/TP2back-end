@@ -5,8 +5,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import br.com.gameverse.dto.EstadoResponseDTO;
 import br.com.gameverse.dto.MunicipioDTO;
 import br.com.gameverse.dto.MunicipioResponseDTO;
+import br.com.gameverse.model.Estado;
 import br.com.gameverse.model.Municipio;
 import br.com.gameverse.repository.EstadoRepository;
 import br.com.gameverse.repository.MunicipioRepository;
@@ -63,35 +65,9 @@ public class MunicipioServiceImpl implements MunicipioService {
     }
 
     @Override
-    public List<MunicipioResponseDTO> findAll(int page, int pageSize, String sort) {
-        String query = "";
-        Map<String, Object> params = new HashMap<>();
-
-        if (sort != null && !sort.isEmpty()) {
-            switch (sort) {
-                case "nome":
-                    query = "order by nome";
-                    break;
-                case "nome desc":
-                    query = "order by nome desc";
-                    break;
-                default:
-                    query = "order by id";
-            }
-        } else {
-            query = "order by id";
-        }
-
-        PanacheQuery<Municipio> panacheQuery = municipioRepository.find(query, params);
-
-        if (pageSize > 0) {
-            panacheQuery = panacheQuery.page(page, pageSize);
-        }
-
-        return panacheQuery.list()
-            .stream()
-            .map(municipio -> MunicipioResponseDTO.valueOf(municipio))
-            .collect(Collectors.toList());
+    public List<MunicipioResponseDTO> findAll(int page, int pageSize) {
+        List<Municipio> list = municipioRepository.findAll().page(page, pageSize).list();
+        return list.stream().map(e -> MunicipioResponseDTO.valueOf(e)).collect(Collectors.toList());
     }
 
     @Override

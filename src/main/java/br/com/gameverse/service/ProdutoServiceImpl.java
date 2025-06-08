@@ -66,10 +66,21 @@ public class ProdutoServiceImpl implements ProdutoService {
         produtoEditado.setPreco(dto.preco());
         produtoEditado.setEstoque(dto.estoque());
         produtoEditado.setDesenvolvedora(dto.desenvolvedora());
-        produtoEditado.setPlataforma(Plataforma.valueOf(dto.idPlataforma()));
-        produtoEditado.setTipoMidia(TipoMidia.valueOf(dto.idTipoMidia()));
-        produtoEditado.setGenero(Genero.valueOf(dto.idGenero()));
-        produtoEditado.setClassificacao(ClassificacaoIndicativa.valueOf(dto.idClassificacao()));
+        if (dto.idPlataforma() != null) {
+            produtoEditado.setPlataforma(Plataforma.valueOf(dto.idPlataforma()));
+        }
+
+        if (dto.idPlataforma() != null) {
+            produtoEditado.setTipoMidia(TipoMidia.valueOf(dto.idTipoMidia()));
+        }
+
+        if (dto.idGenero() != null) {
+            produtoEditado.setGenero(Genero.valueOf(dto.idGenero()));
+        }
+
+        if (dto.idClassificacao() != null) {
+            produtoEditado.setClassificacao(ClassificacaoIndicativa.valueOf(dto.idPlataforma()));
+        }
 
         return ProdutoResponseDTO.valueOf(produtoEditado);
     }

@@ -3,6 +3,7 @@ package br.com.gameverse.resource;
 import java.util.List;
 
 import br.com.gameverse.application.Result;
+import br.com.gameverse.dto.EstadoResponseDTO;
 import br.com.gameverse.dto.MunicipioDTO;
 import br.com.gameverse.dto.MunicipioResponseDTO;
 import br.com.gameverse.dto.PaginacaoResponse;
@@ -27,7 +28,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/municipios")
-//@RolesAllowed({ "Admin" })
+// @RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class MunicipioResource {
@@ -37,16 +38,16 @@ public class MunicipioResource {
     @GET
     public PaginacaoResponse<MunicipioResponseDTO> buscarTodos(
             @QueryParam("page") @DefaultValue("0") int page,
-            @QueryParam("page_size") @DefaultValue("10") int pageSize,
-            @QueryParam("sort") @DefaultValue("id") String sort) {
-        List<MunicipioResponseDTO> municipios = service.findAll(page, pageSize, sort);
+            @QueryParam("page_size") @DefaultValue("10") int pageSize) {
+
+        List<MunicipioResponseDTO> estados = service.findAll(page, pageSize);
         long total = service.count();
-        return new PaginacaoResponse<>(municipios, page, pageSize, total);
+        return new PaginacaoResponse<>(estados, page, pageSize, total);
     }
 
     @GET
     @Path("search/nome/{nome}")
-    //@RolesAllowed({ "Admin" })
+    // @RolesAllowed({ "Admin" })
     public PaginacaoResponse<MunicipioResponseDTO> buscarPorNome(
             @PathParam("nome") String nome,
             @QueryParam("page") @DefaultValue("0") int page,
@@ -66,7 +67,7 @@ public class MunicipioResource {
 
     @GET
     @Path("/{id}")
-    public Response buscarPorId(Long id) {
+    public Response buscarPorId(@PathParam("id") Long id) {
         try {
             MunicipioResponseDTO a = service.findById(id);
             return Response.ok(a).build();
@@ -77,7 +78,7 @@ public class MunicipioResource {
 
     @GET
     @Path("/estados/{idEstado}")
-    //@RolesAllowed({ "Admin" })
+    // @RolesAllowed({ "Admin" })
     public PaginacaoResponse<MunicipioResponseDTO> buscarPorEstado(
             @PathParam("idEstado") Long idEstado,
             @QueryParam("page") @DefaultValue("0") int page,
