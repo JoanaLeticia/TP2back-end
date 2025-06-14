@@ -17,4 +17,5 @@ public interface EnderecoService {
     long countByBairro(String bairro);
     long count();
     long count(String logradouro);
+    List<EnderecoResponseDTO> findByClienteId(Long clienteId);
 }

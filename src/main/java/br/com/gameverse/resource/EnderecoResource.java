@@ -27,7 +27,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/enderecos")
-//@RolesAllowed({ "Admin" })
+// @RolesAllowed({ "Admin" })
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class EnderecoResource {
@@ -141,5 +141,16 @@ public class EnderecoResource {
     @Path("/count")
     public long total() {
         return service.count();
+    }
+
+    @GET
+    @Path("/cliente/{clienteId}")
+    public Response buscarPorClienteId(@PathParam("clienteId") Long clienteId) {
+        try {
+            List<EnderecoResponseDTO> enderecos = service.findByClienteId(clienteId);
+            return Response.ok(enderecos).build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
     }
 }

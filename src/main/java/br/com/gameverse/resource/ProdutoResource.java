@@ -133,7 +133,7 @@ public class ProdutoResource {
 
     @GET
     @Path("/count")
-    public long total() {
+    public long count() {
         return service.count();
     }
 
@@ -141,6 +141,12 @@ public class ProdutoResource {
     @Path("/nome/{nome}/count")
     public long totalPorNome(@PathParam("nome") String nome) {
         return service.count(nome);
+    }
+
+    @GET
+    @Path("/plataforma/{nomePlataforma}/count")
+    public long totalPorPlataforma(@PathParam("nomePlataforma") String nomePlataforma) {
+        return service.countPorPlataforma(nomePlataforma);
     }
 
     @GET

@@ -18,6 +18,10 @@ public class ProdutoRepository implements PanacheRepository<Produto> {
         return count("UPPER(nome) LIKE UPPER(?1)", "%" + nome + "%");
     }
 
+    public long countByPlataforma(Plataforma plataforma) {
+        return count("plataforma = ?1", plataforma);
+    }
+
     public List<Produto> findByPlataforma(Plataforma plataforma) {
         return find("plataforma = ?1", plataforma).list();
     }

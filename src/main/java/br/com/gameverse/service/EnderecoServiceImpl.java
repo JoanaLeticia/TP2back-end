@@ -81,14 +81,15 @@ public class EnderecoServiceImpl implements EnderecoService {
         }
 
         if (pedidoRepository.existsByEnderecoIdAndStatusIn(id,
-        List.of(StatusPedido.AGUARDANDO, StatusPedido.EM_TRANSITO))) {
-            throw new WebApplicationException("Endereço não pode ser excluído pois está vinculado a pedidos ativos", 400);
+                List.of(StatusPedido.AGUARDANDO, StatusPedido.EM_TRANSITO))) {
+            throw new WebApplicationException("Endereço não pode ser excluído pois está vinculado a pedidos ativos",
+                    400);
         }
 
         pedidoRepository.getEntityManager().createQuery(
-        "UPDATE Pedido p SET p.endereco = null WHERE p.endereco.id = :id")
-        .setParameter("id", id)
-        .executeUpdate();
+                "UPDATE Pedido p SET p.endereco = null WHERE p.endereco.id = :id")
+                .setParameter("id", id)
+                .executeUpdate();
 
         List<Cliente> clientes = clienteRepository.findByEnderecoId(id);
         for (Cliente cliente : clientes) {
@@ -134,9 +135,9 @@ public class EnderecoServiceImpl implements EnderecoService {
         }
 
         return panacheQuery.list()
-            .stream()
-            .map(endereco -> EnderecoResponseDTO.valueOf(endereco))
-            .collect(Collectors.toList());
+                .stream()
+                .map(endereco -> EnderecoResponseDTO.valueOf(endereco))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -166,9 +167,9 @@ public class EnderecoServiceImpl implements EnderecoService {
         }
 
         return panacheQuery.list()
-            .stream()
-            .map(endereco -> EnderecoResponseDTO.valueOf(endereco))
-            .collect(Collectors.toList());
+                .stream()
+                .map(endereco -> EnderecoResponseDTO.valueOf(endereco))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -199,9 +200,9 @@ public class EnderecoServiceImpl implements EnderecoService {
         }
 
         return panacheQuery.list()
-            .stream()
-            .map(endereco -> EnderecoResponseDTO.valueOf(endereco))
-            .collect(Collectors.toList());
+                .stream()
+                .map(endereco -> EnderecoResponseDTO.valueOf(endereco))
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -242,13 +243,22 @@ public class EnderecoServiceImpl implements EnderecoService {
         }
 
         return panacheQuery.list()
-            .stream()
-            .map(endereco -> EnderecoResponseDTO.valueOf(endereco))
-            .collect(Collectors.toList());
+                .stream()
+                .map(endereco -> EnderecoResponseDTO.valueOf(endereco))
+                .collect(Collectors.toList());
     }
 
     @Override
     public long countByBairro(String bairro) {
         return enderecoRepository.countByBairro(bairro);
+    }
+
+    @Override
+    public List<EnderecoResponseDTO> findByClienteId(Long clienteId) {
+        return clienteRepository.findById(clienteId)
+                .getEndereco()
+                .stream()
+                .map(EnderecoResponseDTO::valueOf)
+                .collect(Collectors.toList());
     }
 }

@@ -1,6 +1,7 @@
 package br.com.gameverse.resource;
 
 import java.util.List;
+import org.jboss.logging.Logger;
 
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
@@ -24,6 +25,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 import jakarta.ws.rs.core.Response.Status;
 
 @Path("/pedidos")
@@ -37,10 +39,13 @@ public class PedidoResource {
     @Inject
     JsonWebToken jwt;
 
+    private static final Logger LOG = Logger.getLogger(PedidoResource.class);
+
     @POST
     public Response incluir(PedidoDTO dto) {
         try {
             String email = jwt.getSubject();
+            LOG.info("Recuperando o identificador do usuário do token" + email);
             PedidoResponseDTO retorno = service.create(dto, email);
             return Response.status(201).entity(retorno).build();
         } catch (ConstraintViolationException e) {

@@ -17,4 +17,5 @@ public interface ProdutoService {
     List<ProdutoResponseDTO> buscarPorPlataforma(String nomePlataforma, int page, int pageSize, String sort);
     long count();
     long count(String nome);
+    long countPorPlataforma(String nomePlataforma);
 }

@@ -205,4 +205,10 @@ public class ProdutoServiceImpl implements ProdutoService {
         return produtoRepository.countByNome(nome);
     }
 
+    @Override
+    public long countPorPlataforma(String nomePlataforma) {
+        Plataforma plataforma = Plataforma.valueOf(nomePlataforma.toUpperCase());
+        return produtoRepository.countByPlataforma(plataforma);
+    }
+
 }
