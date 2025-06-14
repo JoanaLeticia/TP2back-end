@@ -28,9 +28,14 @@ public class MunicipioServiceImpl implements MunicipioService {
     @Override
     @Transactional
     public MunicipioResponseDTO create(MunicipioDTO municipio) {
+        Estado estado = estadoRepository.findById(municipio.idEstado());
+        if (estado == null) {
+            throw new IllegalArgumentException("Estado não encontrado");
+        }
+
         Municipio novoMunicipio = new Municipio();
         novoMunicipio.setNome(municipio.nome());
-        novoMunicipio.setEstado(estadoRepository.findById(municipio.idEstado()));
+        novoMunicipio.setEstado(estado);
 
         municipioRepository.persist(novoMunicipio);
 
@@ -98,9 +103,9 @@ public class MunicipioServiceImpl implements MunicipioService {
         }
 
         return panacheQuery.list()
-            .stream()
-            .map(municipio -> MunicipioResponseDTO.valueOf(municipio))
-            .collect(Collectors.toList());
+                .stream()
+                .map(municipio -> MunicipioResponseDTO.valueOf(municipio))
+                .collect(Collectors.toList());
     }
 
     public List<MunicipioResponseDTO> findByNome(String nome) {
@@ -112,7 +117,7 @@ public class MunicipioServiceImpl implements MunicipioService {
         String query = "estado.id = :idEstado";
         Map<String, Object> params = new HashMap<>();
         params.put("idEstado", idEstado);
-    
+
         if (sort != null && !sort.isEmpty()) {
             switch (sort) {
                 case "nome":
@@ -127,17 +132,17 @@ public class MunicipioServiceImpl implements MunicipioService {
         } else {
             query += " order by id";
         }
-    
+
         PanacheQuery<Municipio> panacheQuery = municipioRepository.find(query, params);
-    
+
         if (pageSize > 0) {
             panacheQuery = panacheQuery.page(page, pageSize);
         }
-    
+
         return panacheQuery.list()
-            .stream()
-            .map(municipio -> MunicipioResponseDTO.valueOf(municipio))
-            .collect(Collectors.toList());
+                .stream()
+                .map(municipio -> MunicipioResponseDTO.valueOf(municipio))
+                .collect(Collectors.toList());
     }
 
     @Override

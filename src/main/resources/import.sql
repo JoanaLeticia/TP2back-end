@@ -134,15 +134,12 @@ INSERT INTO produto (nome, descricao, preco, estoque, desenvolvedora, plataforma
 -- Inserção de Pedidos (sem especificar o ID)
 INSERT INTO Pedido (data_hora, id_cliente, id_endereco, valor_total, status) VALUES
 ('2023-11-01 10:30:00', 2, 1, 450.00, 'AGUARDANDO'),
-('2023-11-02 14:15:00', 3, 2, 320.50, 'EM_TRANSITO'),
 ('2023-11-03 09:45:00', 4, 3, 780.75, 'ENTREGUE');
 
 -- Inserção de ItensPedido (sem especificar o ID)
 INSERT INTO ItemPedido (valor, quantidade, id_produto, id_pedido) VALUES
 (200.00, 2, 1, 1),
 (250.00, 1, 2, 1),
-(120.50, 1, 3, 2),
-(100.00, 2, 1, 2),
 (350.75, 3, 1, 3),
 (180.00, 1, 2, 3),
 (250.00, 1, 3, 3);

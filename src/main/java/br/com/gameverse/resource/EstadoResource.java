@@ -110,10 +110,10 @@ public class EstadoResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    public Response apagar(Long id) {
+    public Response apagar(@PathParam("id") Long id) {
         try {
             service.delete(id);
-            return Response.noContent().build();
+        return Response.noContent().build();
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
             return Response.status(Status.NOT_FOUND).entity(result).build();

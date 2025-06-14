@@ -4,27 +4,32 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import br.com.gameverse.dto.AdministradorDTO;
+import br.com.gameverse.dto.AdministradorResponseDTO;
+import br.com.gameverse.dto.ClienteResponseDTO;
 import br.com.gameverse.dto.ProdutoDTO;
 import br.com.gameverse.dto.ProdutoResponseDTO;
+import br.com.gameverse.dto.UsuarioResponseDTO;
+import br.com.gameverse.model.Administrador;
 import br.com.gameverse.model.ClassificacaoIndicativa;
-import br.com.gameverse.model.Estado;
+import br.com.gameverse.model.Cliente;
 import br.com.gameverse.model.Genero;
+import br.com.gameverse.model.Perfil;
 import br.com.gameverse.model.Plataforma;
 import br.com.gameverse.model.Produto;
 import br.com.gameverse.model.TipoMidia;
+import br.com.gameverse.repository.AdministradorRepository;
 import br.com.gameverse.repository.ProdutoRepository;
-import br.com.gameverse.resource.ProdutoResource;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
-
-import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.inject.Inject;
-import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class ProdutoServiceImpl implements ProdutoService {

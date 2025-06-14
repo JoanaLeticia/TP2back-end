@@ -118,15 +118,12 @@ public class ProdutoResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    public Response apagar(Long id) {
+    public Response apagar(@PathParam("id") Long id) {
         try {
-            LOG.info("Deletando o produto.");
             service.delete(id);
-            LOG.info("Produto excluido com sucesso.");
-            return Response.noContent().build();
+        return Response.noContent().build();
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
-            LOG.debug("Debug da exclusão do Produto.");
             return Response.status(Status.NOT_FOUND).entity(result).build();
         }
     }

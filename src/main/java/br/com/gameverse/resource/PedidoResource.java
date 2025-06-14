@@ -21,6 +21,7 @@ import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -57,10 +58,10 @@ public class PedidoResource {
     @DELETE
     @Path("/{id}")
     @Transactional
-    public Response apagar(Long id) {
+    public Response apagar(@PathParam("id") Long id) {
         try {
             service.delete(id);
-            return Response.noContent().build();
+        return Response.noContent().build();
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
             return Response.status(Status.NOT_FOUND).entity(result).build();

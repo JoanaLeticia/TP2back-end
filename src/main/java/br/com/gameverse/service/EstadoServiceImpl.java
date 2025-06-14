@@ -30,7 +30,7 @@ public class EstadoServiceImpl implements EstadoService {
         novoEstado.setNome(estado.nome());
         novoEstado.setSigla(estado.sigla());
 
-        Regiao regiao = Regiao.valueOf((int) estado.idRegiao());
+        Regiao regiao = null;
         novoEstado.setRegiao(regiao);
 
         estadoRepository.persist(novoEstado);
