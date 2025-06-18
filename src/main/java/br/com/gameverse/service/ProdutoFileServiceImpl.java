@@ -3,7 +3,11 @@ package br.com.gameverse.service;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -16,7 +20,7 @@ import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class ProdutoFileServiceImpl implements FileService {
-    private final String PATH_USER = System.getProperty("user.home")
+    private final String PATH_UPLOAD = System.getProperty("user.home")
         + File.separator + "quarkus"
         + File.separator + "images"
         + File.separator + "produto" + File.separator;
@@ -30,70 +34,57 @@ public class ProdutoFileServiceImpl implements FileService {
         Produto produto = produtoRepository.findById(id);
 
         try {
-            // Exclui a imagem antiga (se existir)
-            String imagemAntiga = produto.getNomeImagem();
-            if (imagemAntiga != null && !imagemAntiga.isEmpty()) {
-                File arquivoAntigo = new File(PATH_USER + imagemAntiga);
+            // Verifica se o diretório de upload existe
+            File diretorio = new File(PATH_UPLOAD);
+            if (!diretorio.exists()) {
+                diretorio.mkdirs();
+            }
+
+            // Se já existe uma imagem, deleta a antiga
+            if (produto.getNomeImagem() != null && !produto.getNomeImagem().isEmpty()) {
+                File arquivoAntigo = new File(PATH_UPLOAD + produto.getNomeImagem());
                 if (arquivoAntigo.exists()) {
-                    boolean deleted = arquivoAntigo.delete();
-                    if (!deleted) {
-                        throw new IOException("Erro ao excluir a imagem antiga.");
-                    }
+                    arquivoAntigo.delete();
                 }
             }
 
-            String novoNomeImagem = salvarImagem(imagem, nomeImagem);
-            produto.setNomeImagem(novoNomeImagem);
+            // Salva a nova imagem
+            String novoNome = gerarNomeUnico(nomeImagem);
+            Path destino = Paths.get(PATH_UPLOAD + novoNome);
+            Files.write(destino, imagem);
+
+            produto.setNomeImagem(novoNome);
+            produtoRepository.persist(produto);
 
         } catch (IOException e) {
-            throw e;
+            throw new IOException("Erro ao salvar imagem do produto: " + e.getMessage(), e);
         }
     }
 
-    private String salvarImagem(byte[] imagem, String nomeImagem) throws IOException {
-
-        String mimeType = Files.probeContentType(new File(nomeImagem).toPath());
-        List<String> listMimeType = Arrays.asList("image/jpg", "image/jpeg", "image/png", "image/gif");
-        if (!listMimeType.contains(mimeType)) {
-            throw new IOException("Tipo de imagem não suportada.");
-        }
-
-        if (imagem.length > (1024 * 1024 * 10))
-            throw new IOException("Arquivo muito grande.");
-
-        File diretorio = new File(PATH_USER);
-        if (!diretorio.exists())
-            diretorio.mkdirs();
-
-        String nomeArquivo = UUID.randomUUID()
-                + "." + mimeType.substring(mimeType.lastIndexOf("/") + 1);
-
-        String path = PATH_USER + nomeArquivo;
-
-        File file = new File(path);
-        // alunos (melhorar :)
-        if (file.exists())
-            throw new IOException("O nome gerado da imagem está repedido.");
-
-        file.createNewFile();
-
-        FileOutputStream fos = new FileOutputStream(file);
-        fos.write(imagem);
-        fos.flush();
-        fos.close();
-
-        return nomeArquivo;
-
+    private String gerarNomeUnico(String nomeOriginal) {
+        String extensao = nomeOriginal.substring(nomeOriginal.lastIndexOf("."));
+        return UUID.randomUUID().toString() + extensao;
     }
 
     @Override
     public File download(String nomeArquivo) {
-        File file = new File(PATH_USER + nomeArquivo);
+        File file = new File(PATH_UPLOAD + nomeArquivo);
+        if (!file.exists()) {
+            // Caso a imagem não exista no diretório de upload, tenta carregar do resources
+            try (InputStream in = Thread.currentThread()
+                    .getContextClassLoader()
+                    .getResourceAsStream("images/" + nomeArquivo)) {
+                
+                if (in != null) {
+                    // Copia do resources para o diretório de upload
+                    Files.copy(in, Paths.get(PATH_UPLOAD + nomeArquivo), StandardCopyOption.REPLACE_EXISTING);
+                    return new File(PATH_UPLOAD + nomeArquivo);
+                }
+            } catch (IOException e) {
+                // Se não encontrar em nenhum lugar, retorna null ou uma imagem padrão
+                return null;
+            }
+        }
         return file;
-    }
-
-    public static void main(String[] args) {
-        ProdutoFileServiceImpl f = new ProdutoFileServiceImpl();
-        System.out.println(f.download("thumbnail_jogo.jpg").getName());
     }
 }

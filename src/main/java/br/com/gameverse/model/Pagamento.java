@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToOne;
 
 @Entity
 public class Pagamento {
@@ -28,6 +29,17 @@ public class Pagamento {
     
     @Enumerated(EnumType.STRING)
     private StatusPagamento status;
+
+    @OneToOne(mappedBy = "pagamento")
+    private Pedido pedido;
+
+    public Pedido getPedido() {
+        return pedido;
+    }
+
+    public void setPedido(Pedido pedido) {
+        this.pedido = pedido;
+    }
 
     public Long getId() {
         return id;

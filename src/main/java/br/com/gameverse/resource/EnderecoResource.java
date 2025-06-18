@@ -3,6 +3,7 @@ package br.com.gameverse.resource;
 import java.util.List;
 
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.jboss.logging.Logger;
 
 import br.com.gameverse.application.Result;
 import br.com.gameverse.dto.EnderecoDTO;
@@ -43,6 +44,8 @@ public class EnderecoResource {
 
     @Inject
     JsonWebToken jwt;
+
+    private static final Logger LOG = Logger.getLogger(EnderecoResource.class);
 
     @GET
     @RolesAllowed({ "Admin" })
@@ -106,7 +109,7 @@ public class EnderecoResource {
     }
 
     @GET
-    @RolesAllowed({ "Admin" })
+    @RolesAllowed({ "Cliente", "Admin" })
     @Path("/{id}")
     public Response buscarPorId(@PathParam("id") Long id) {
         try {
@@ -118,9 +121,13 @@ public class EnderecoResource {
     }
 
     @POST
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     public Response incluir(EnderecoDTO dto) {
         try {
+            if (!jwt.getGroups().contains("Admin") && !isOwner(dto.idCliente())) {
+                throw new NotAuthorizedException(
+                        "Acesso negado: você só pode adicionar endereços ao seu próprio cadastro");
+            }
             return Response.status(Status.CREATED).entity(service.create(dto)).build();
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
@@ -129,10 +136,14 @@ public class EnderecoResource {
     }
 
     @PUT
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     @Path("/{id}")
     public Response alterar(EnderecoDTO dto, @PathParam("id") Long id) {
         try {
+            EnderecoResponseDTO endereco = service.findById(id);
+            if (!jwt.getGroups().contains("Admin") && !isOwner(endereco.clienteId())) {
+                throw new NotAuthorizedException("Acesso negado: você só pode editar seus próprios endereços");
+            }
             service.update(dto, id);
             return Response.noContent().build();
         } catch (ConstraintViolationException e) {
@@ -142,13 +153,17 @@ public class EnderecoResource {
     }
 
     @DELETE
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     @Path("/{id}")
     @Transactional
     public Response apagar(@PathParam("id") Long id) {
         try {
+            EnderecoResponseDTO endereco = service.findById(id);
+            if (!jwt.getGroups().contains("Admin") && !isOwner(endereco.clienteId())) {
+                throw new NotAuthorizedException("Acesso negado: você só pode excluir seus próprios endereços");
+            }
             service.delete(id);
-        return Response.noContent().build();
+            return Response.noContent().build();
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
             return Response.status(Status.NOT_FOUND).entity(result).build();
@@ -162,7 +177,7 @@ public class EnderecoResource {
     }
 
     @GET
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     @Path("/cliente/{clienteId}")
     public Response buscarPorClienteId(@PathParam("clienteId") Long clienteId) {
         String email = jwt.getSubject();
@@ -171,12 +186,27 @@ public class EnderecoResource {
         if (!jwt.getGroups().contains("Admin") && !cliente.getId().equals(clienteId)) {
             throw new NotAuthorizedException("Acesso negado");
         }
-        
+
         try {
             List<EnderecoResponseDTO> enderecos = service.findByClienteId(clienteId);
             return Response.ok(enderecos).build();
         } catch (EntityNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
+
+    private boolean isOwner(Long clienteId) {
+        if (clienteId == null || jwt == null || jwt.getSubject() == null) {
+            return false;
+        }
+
+        try {
+            String email = jwt.getSubject();
+            Cliente cliente = clienteRepository.findByEmail(email);
+            return cliente != null && clienteId.equals(cliente.getId());
+        } catch (Exception e) {
+            LOG.error("Erro ao verificar propriedade do recurso", e);
+            return false;
         }
     }
 }

@@ -1,7 +1,9 @@
 package br.com.gameverse.resource;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.annotations.providers.multipart.MultipartForm;
@@ -15,6 +17,7 @@ import br.com.gameverse.model.ClassificacaoIndicativa;
 import br.com.gameverse.model.Genero;
 import br.com.gameverse.model.Plataforma;
 import br.com.gameverse.model.TipoMidia;
+import br.com.gameverse.repository.ProdutoRepository;
 import br.com.gameverse.service.FileService;
 import br.com.gameverse.service.ProdutoService;
 import jakarta.annotation.security.RolesAllowed;
@@ -47,6 +50,9 @@ public class ProdutoResource {
 
     @Inject
     FileService fileService;
+
+    @Inject
+    ProdutoRepository produtoRepository;
 
     private static final Logger LOG = Logger.getLogger(ProdutoResource.class);
 
@@ -123,7 +129,7 @@ public class ProdutoResource {
     public Response apagar(@PathParam("id") Long id) {
         try {
             service.delete(id);
-        return Response.noContent().build();
+            return Response.noContent().build();
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
             return Response.status(Status.NOT_FOUND).entity(result).build();
@@ -197,10 +203,35 @@ public class ProdutoResource {
     @GET
     @Path("/plataforma/{nome}")
     public List<ProdutoResponseDTO> buscarPorPlataforma(@PathParam("nome") String nomePlataforma,
-        @QueryParam("page") @DefaultValue("0") int page,
-        @QueryParam("size") @DefaultValue("10") int size,
-        @QueryParam("sort") @DefaultValue("id asc") String sort) {
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("size") @DefaultValue("10") int size,
+            @QueryParam("sort") @DefaultValue("id asc") String sort) {
         return service.buscarPorPlataforma(nomePlataforma, page, size, sort);
+    }
+
+    @GET
+    @Path("/filtros/{plataforma}")
+    public Response getFiltrosPorPlataforma(@PathParam("plataforma") String nomePlataforma) {
+        try {
+            LOG.infof("Buscando filtros para plataforma: %s", nomePlataforma);
+
+            Map<String, Object> filtros = service.getFiltrosPorPlataforma(nomePlataforma);
+
+            if (filtros.isEmpty()) {
+                LOG.warnf("Nenhum filtro encontrado para plataforma: %s", nomePlataforma);
+                return Response.status(Status.NOT_FOUND)
+                        .entity("Nenhum produto encontrado para a plataforma especificada")
+                        .build();
+            }
+
+            return Response.ok(filtros).build();
+
+        } catch (RuntimeException e) {
+            LOG.errorf("Erro ao buscar filtros para plataforma %s: %s", nomePlataforma, e.getMessage());
+            return Response.status(Status.BAD_REQUEST)
+                    .entity(e.getMessage())
+                    .build();
+        }
     }
 
 }

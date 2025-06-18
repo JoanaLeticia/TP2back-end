@@ -7,7 +7,6 @@ import br.com.gameverse.dto.MunicipioDTO;
 import br.com.gameverse.dto.MunicipioResponseDTO;
 import br.com.gameverse.dto.PaginacaoResponse;
 import br.com.gameverse.service.MunicipioService;
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -87,7 +86,6 @@ public class MunicipioResource {
     }
 
     @POST
-    @RolesAllowed({ "Admin" })
     public Response incluir(MunicipioDTO dto) {
         try {
             return Response.status(Status.CREATED).entity(service.create(dto)).build();
@@ -99,7 +97,6 @@ public class MunicipioResource {
 
     @PUT
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     public Response alterar(MunicipioDTO dto, @PathParam("id") Long id) {
         try {
             service.update(dto, id);
@@ -112,7 +109,6 @@ public class MunicipioResource {
 
     @DELETE
     @Path("/{id}")
-    @RolesAllowed({ "Admin" })
     @Transactional
     public Response apagar(@PathParam("id") Long id) {
         try {

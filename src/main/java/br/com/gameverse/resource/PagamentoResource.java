@@ -16,6 +16,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -66,7 +67,7 @@ public class PagamentoResource {
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     public Response buscarPorId(@PathParam("id") Long id) {
         try {
             PagamentoResponseDTO a = service.findById(id);
@@ -77,7 +78,7 @@ public class PagamentoResource {
     }
 
     @POST
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     public Response incluir(PagamentoDTO dto) {
         try {
             return Response.status(Status.CREATED).entity(service.create(dto)).build();
@@ -119,4 +120,32 @@ public class PagamentoResource {
     public long total() {
         return service.count();
     }
+
+    @PATCH
+    @Path("/{id}/aprovar")
+    @RolesAllowed({ "Admin" })
+    @Transactional
+    public Response aprovarPagamento(@PathParam("id") Long id) {
+        try {
+            service.aprovarPagamento(id);
+            return Response.ok("Pagamento aprovado e pedido atualizado").build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (IllegalStateException e) {
+            return Response.status(Status.BAD_REQUEST).entity(e.getMessage()).build();
+        }
+    }
+
+    @GET
+    @Path("/pedido/{pedidoId}")
+    @RolesAllowed({ "Cliente", "Admin" })
+    public Response buscarPorPedido(@PathParam("pedidoId") Long pedidoId) {
+        try {
+            PagamentoResponseDTO pagamento = service.findByPedidoId(pedidoId);
+            return Response.ok(pagamento).build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
+
 }

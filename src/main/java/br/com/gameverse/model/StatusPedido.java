@@ -4,10 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum StatusPedido {
-    AGUARDANDO(1, "Aguardando"), 
-    EM_TRANSITO(2, "Em trânsito"),
-    ENTREGUE(3, "Entregue"),
-    CANCELADO(4, "Cancelado");
+    AGUARDANDO(1, "Aguardando"),
+    PAGO(2, "Pago"),
+    EM_TRANSITO(3, "Em trânsito"),
+    ENTREGUE(4, "Entregue"),
+    CANCELADO(5, "Cancelado");
 
     private final int ID;
     private final String NOME;

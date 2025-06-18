@@ -1,6 +1,8 @@
 package br.com.gameverse.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -207,5 +209,39 @@ public class ProdutoServiceImpl implements ProdutoService {
         Plataforma plataforma = Plataforma.valueOf(nomePlataforma.toUpperCase());
         return produtoRepository.countByPlataforma(plataforma);
     }
+
+    @Override
+public Map<String, Object> getFiltrosPorPlataforma(String nomePlataforma) {
+    Map<String, Object> filtros = new HashMap<>();
+    
+    try {
+        Plataforma plataforma = Plataforma.valueOf(nomePlataforma.toUpperCase());
+        
+        // Obter gêneros distintos
+        List<String> generos = produtoRepository.findGenerosByPlataforma(plataforma)
+            .stream()
+            .map(Enum::name)
+            .collect(Collectors.toList());
+        
+        // Obter desenvolvedoras distintas
+        List<String> desenvolvedoras = produtoRepository.findDesenvolvedorasByPlataforma(plataforma);
+        
+        // Obter faixas de preço (usando a implementação dinâmica que criamos)
+        List<Double> faixasPreco = produtoRepository.findProdutosPrecoByPlataforma(plataforma);
+        
+        // Adicionar ao mapa de filtros
+        filtros.put("generos", generos);
+        filtros.put("desenvolvedoras", desenvolvedoras);
+        filtros.put("faixasPreco", faixasPreco);
+        
+        // Opcional: adicionar estatísticas úteis
+        filtros.put("quantidadeProdutos", produtoRepository.countByPlataforma(plataforma));
+        
+    } catch (IllegalArgumentException e) {
+        throw new RuntimeException("Plataforma inválida: " + nomePlataforma);
+    }
+    
+    return filtros;
+}
 
 }

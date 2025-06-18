@@ -14,4 +14,6 @@ public interface PagamentoService {
     List<PagamentoResponseDTO> findByNumeroCartao(String numeroCartao, int page, int size, String sort);
     long count();
     long count(String numeroCartao);
+    void aprovarPagamento(Long pagamentoId);
+    PagamentoResponseDTO findByPedidoId(Long pedidoId);
 }

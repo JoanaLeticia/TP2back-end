@@ -10,4 +10,8 @@ public class PagamentoRepository implements PanacheRepository<Pagamento>{
     public PanacheQuery<Pagamento> findByNumeroCartao(String numeroCartao) {
         return find("UPPER(numeroCartao) LIKE UPPER(?1)", "%" + numeroCartao + "%");
     }
+
+    public Pagamento findByPedidoId(Long pedidoId) {
+        return find("pedido.id", pedidoId).firstResult();
+    }
 }

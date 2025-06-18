@@ -17,4 +17,5 @@ public interface ClienteService {
     long count();
     long count(String nome);
     public UsuarioResponseDTO login(String email, String senha);
+    ClienteResponseDTO findByEmail(String email);
 }

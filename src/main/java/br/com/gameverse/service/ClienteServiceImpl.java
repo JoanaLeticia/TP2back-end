@@ -19,6 +19,7 @@ import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @ApplicationScoped
@@ -235,6 +236,15 @@ public class ClienteServiceImpl implements ClienteService {
                 novoCliente.getNome(),
                 novoCliente.getEmail(),
                 novoCliente.getPerfil());
+    }
+
+    @Override
+    public ClienteResponseDTO findByEmail(String email) {
+        Cliente cliente = clienteRepository.findByEmail(email);
+        if (cliente == null) {
+            throw new EntityNotFoundException("Cliente não encontrado");
+        }
+        return ClienteResponseDTO.valueOf(cliente);
     }
 
 }

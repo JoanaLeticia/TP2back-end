@@ -1,6 +1,7 @@
 package br.com.gameverse.service;
 
 import java.util.List;
+import java.util.Map;
 
 import br.com.gameverse.dto.ProdutoDTO;
 import br.com.gameverse.dto.ProdutoResponseDTO;
@@ -18,4 +19,5 @@ public interface ProdutoService {
     long count();
     long count(String nome);
     long countPorPlataforma(String nomePlataforma);
+    Map<String, Object> getFiltrosPorPlataforma(String nomePlataforma);
 }

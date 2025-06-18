@@ -3,11 +3,14 @@ package br.com.gameverse.resource;
 import java.util.List;
 
 import org.eclipse.microprofile.jwt.JsonWebToken;
+import org.jboss.logging.Logger;
 
 import br.com.gameverse.application.Result;
 import br.com.gameverse.dto.PaginacaoResponse;
 import br.com.gameverse.dto.TelefoneDTO;
 import br.com.gameverse.dto.TelefoneResponseDTO;
+import br.com.gameverse.model.Cliente;
+import br.com.gameverse.repository.ClienteRepository;
 import br.com.gameverse.service.TelefoneService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -18,6 +21,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -36,15 +40,20 @@ public class TelefoneResource {
     TelefoneService service;
 
     @Inject
+    ClienteRepository clienteRepository;
+
+    @Inject
     JsonWebToken jwt;
+
+    private static final Logger LOG = Logger.getLogger(TelefoneResource.class);
 
     @GET
     @RolesAllowed({ "Admin" })
     public PaginacaoResponse<TelefoneResponseDTO> buscarTodos(
-        @QueryParam("page") @DefaultValue("0") int page,
-        @QueryParam("page_size") @DefaultValue("10") int pageSize,
-        @QueryParam("sort") @DefaultValue("id") String sort) {
-        
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("page_size") @DefaultValue("10") int pageSize,
+            @QueryParam("sort") @DefaultValue("id") String sort) {
+
         List<TelefoneResponseDTO> telefones = service.findAll(page, pageSize, sort);
         long total = service.count();
         return new PaginacaoResponse<>(telefones, page, pageSize, total);
@@ -54,11 +63,11 @@ public class TelefoneResource {
     @RolesAllowed({ "Admin" })
     @Path("search/numero/{numero}")
     public PaginacaoResponse<TelefoneResponseDTO> buscarPorNumero(
-        @PathParam("numero") String numero,
-        @QueryParam("page") @DefaultValue("0") int page,
-        @QueryParam("page_size") @DefaultValue("10") int pageSize,
-        @QueryParam("sort") @DefaultValue("id") String sort) {
-        
+            @PathParam("numero") String numero,
+            @QueryParam("page") @DefaultValue("0") int page,
+            @QueryParam("page_size") @DefaultValue("10") int pageSize,
+            @QueryParam("sort") @DefaultValue("id") String sort) {
+
         List<TelefoneResponseDTO> telefones = service.findByNumero(numero, page, pageSize, sort);
         long total = service.count(numero);
         return new PaginacaoResponse<>(telefones, page, pageSize, total);
@@ -72,9 +81,12 @@ public class TelefoneResource {
 
     @GET
     @Path("/{id}")
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     public Response buscarPorId(Long id) {
         try {
+            if (!isOwner(id) && !jwt.getGroups().contains("Admin")) {
+                return Response.status(Status.FORBIDDEN).build();
+            }
             TelefoneResponseDTO a = service.findById(id);
             return Response.ok(a).build();
         } catch (EntityNotFoundException e) {
@@ -83,9 +95,13 @@ public class TelefoneResource {
     }
 
     @POST
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     public Response incluir(TelefoneDTO dto) {
         try {
+            if (!jwt.getGroups().contains("Admin") && !isOwner(dto.idCliente())) {
+                throw new NotAuthorizedException(
+                        "Acesso negado: você só pode adicionar telefones ao seu próprio cadastro");
+            }
             return Response.status(Status.CREATED).entity(service.create(dto)).build();
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
@@ -95,9 +111,13 @@ public class TelefoneResource {
 
     @PUT
     @Path("/{id}")
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     public Response alterar(TelefoneDTO dto, @PathParam("id") Long id) {
         try {
+            TelefoneResponseDTO telefone = service.findById(id);
+            if (!jwt.getGroups().contains("Admin") && !isOwner(telefone.clienteId())) {
+                throw new NotAuthorizedException("Acesso negado: você só pode editar seus próprios telefones");
+            }
             service.update(dto, id);
             return Response.noContent().build();
         } catch (ConstraintViolationException e) {
@@ -108,12 +128,16 @@ public class TelefoneResource {
 
     @DELETE
     @Path("/{id}")
-    @RolesAllowed({"Cliente", "Admin"})
+    @RolesAllowed({ "Cliente", "Admin" })
     @Transactional
     public Response apagar(@PathParam("id") Long id) {
         try {
+            TelefoneResponseDTO telefone = service.findById(id);
+            if (!jwt.getGroups().contains("Admin") && !isOwner(telefone.clienteId())) {
+                throw new NotAuthorizedException("Acesso negado: você só pode excluir seus próprios telefones");
+            }
             service.delete(id);
-        return Response.noContent().build();
+            return Response.noContent().build();
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
             return Response.status(Status.NOT_FOUND).entity(result).build();
@@ -124,5 +148,20 @@ public class TelefoneResource {
     @Path("/count")
     public long total() {
         return service.count();
+    }
+
+    private boolean isOwner(Long clienteId) {
+        if (clienteId == null || jwt == null || jwt.getSubject() == null) {
+            return false;
+        }
+
+        try {
+            String email = jwt.getSubject();
+            Cliente cliente = clienteRepository.findByEmail(email);
+            return cliente != null && clienteId.equals(cliente.getId());
+        } catch (Exception e) {
+            LOG.error("Erro ao verificar propriedade do recurso", e);
+            return false;
+        }
     }
 }

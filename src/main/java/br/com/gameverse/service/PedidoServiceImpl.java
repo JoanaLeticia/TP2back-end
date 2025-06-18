@@ -27,6 +27,7 @@ import br.com.gameverse.repository.ProdutoRepository;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 
 @ApplicationScoped
@@ -89,7 +90,17 @@ public class PedidoServiceImpl implements PedidoService {
         novoPedido.setEndereco(endereco);
 
         Pagamento pagamento = new Pagamento();
-        pagamento.setMetodo(MetodoPagamento.valueOf(pedido.pagamento().idMetodo()));
+        MetodoPagamento metodo = MetodoPagamento.valueOf(pedido.pagamento().idMetodo());
+        pagamento.setMetodo(metodo);
+        if (metodo == MetodoPagamento.CARTAO_CREDITO || metodo == MetodoPagamento.CARTAO_DEBITO) {
+            String numeroLimpo = pedido.pagamento().numeroCartao().replaceAll("[^0-9]", "");
+            if (numeroLimpo.length() < 13 || numeroLimpo.length() > 19) {
+                throw new IllegalArgumentException("Número do cartão inválido");
+            }
+            pagamento.setNumeroCartao(numeroLimpo);
+        } else {
+            pagamento.setNumeroCartao(null);
+        }
         pagamento.setStatus(StatusPagamento.PENDENTE);
         pagamento.setDataPagamento(LocalDateTime.now());
         novoPedido.setPagamento(pagamento);
@@ -145,12 +156,10 @@ public class PedidoServiceImpl implements PedidoService {
         }
 
         return panacheQuery.list()
-            .stream()
-            .map(pedido -> PedidoResponseDTO.valueOf(pedido))
-            .collect(Collectors.toList());
+                .stream()
+                .map(pedido -> PedidoResponseDTO.valueOf(pedido))
+                .collect(Collectors.toList());
     }
-
-    
 
     @Override
     public long count() {
@@ -167,11 +176,11 @@ public class PedidoServiceImpl implements PedidoService {
     public List<ItemPedidoResponseDTO> findItensByUsuario(Cliente cliente) {
         List<Pedido> pedidos = pedidoRepository.findByUsuario(cliente);
         List<ItemPedido> itens = new ArrayList<>();
-    
+
         for (Pedido pedido : pedidos) {
             itens.addAll(pedido.getItens());
         }
-    
+
         return itens.stream()
                 .map(i -> ItemPedidoResponseDTO.valueOf(i))
                 .collect(Collectors.toList());
@@ -181,14 +190,64 @@ public class PedidoServiceImpl implements PedidoService {
     public List<PedidoResponseDTO> findAllPedidosByClienteId(Long clienteId) {
         Cliente cliente = clienteRepository.findById(clienteId);
         List<Pedido> pedidos = pedidoRepository.findByUsuario(cliente);
-        
+
         return pedidos.stream().map(PedidoResponseDTO::valueOf).collect(Collectors.toList());
     }
-    
+
     @Override
     public List<PedidoResponseDTO> pedidosUsuarioLogado(Cliente cliente) {
         Cliente usuario = clienteRepository.findByEmail(cliente.getEmail());
         List<Pedido> pedidos = pedidoRepository.findByUsuario(usuario);
         return pedidos.stream().map(p -> PedidoResponseDTO.valueOf(p)).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void atualizarStatusPedido(Long pedidoId, StatusPedido novoStatus) {
+        Pedido pedido = pedidoRepository.findById(pedidoId);
+        if (pedido == null) {
+            throw new EntityNotFoundException("Pedido não encontrado");
+        }
+
+        // Validações adicionais (opcional):
+        if (novoStatus == StatusPedido.PAGO && pedido.getPagamento().getStatus() != StatusPagamento.APROVADO) {
+            throw new IllegalStateException("Pagamento não está aprovado");
+        }
+
+        pedido.setStatus(novoStatus);
+        pedidoRepository.persist(pedido);
+    }
+
+    @Override
+    public List<PedidoResponseDTO> findByStatus(StatusPedido status, int page, int size, String sort) {
+        String query = "status = :status";
+        Map<String, Object> params = new HashMap<>();
+        params.put("status", status);
+
+        if (sort != null && !sort.isEmpty()) {
+            String[] parts = sort.split(" ");
+            String field = parts[0];
+            String direction = parts.length > 1 ? parts[1] : "asc";
+
+            if (List.of("dataHora", "valorTotal").contains(field)) {
+                query += " order by " + field + " " + direction;
+            }
+        }
+
+        PanacheQuery<Pedido> panacheQuery = pedidoRepository.find(query, params);
+
+        if (size > 0) {
+            panacheQuery = panacheQuery.page(page, size);
+        }
+
+        return panacheQuery.list()
+                .stream()
+                .map(PedidoResponseDTO::valueOf)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public long countByStatus(StatusPedido status) {
+        return pedidoRepository.count("status", status);
     }
 }
