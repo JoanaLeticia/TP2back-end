@@ -2,16 +2,20 @@ package br.com.gameverse.resource;
 
 import java.util.List;
 
+import javax.print.attribute.standard.Media;
+
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
 
 import br.com.gameverse.application.Result;
 import br.com.gameverse.dto.ClienteDTO;
 import br.com.gameverse.dto.ClienteResponseDTO;
+import br.com.gameverse.dto.ClienteUpdateDTO;
 import br.com.gameverse.dto.PaginacaoResponse;
 import br.com.gameverse.model.Cliente;
 import br.com.gameverse.repository.ClienteRepository;
 import br.com.gameverse.service.ClienteService;
+import br.com.gameverse.service.UsuarioService;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,6 +25,8 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -41,6 +47,9 @@ public class ClienteResource {
 
     @Inject
     ClienteRepository clienteRepository;
+
+    @Inject
+    UsuarioService usuarioService;
 
     @Inject
     JsonWebToken jwt;
@@ -135,6 +144,50 @@ public class ClienteResource {
         List<ClienteResponseDTO> clientes = service.findByNome(nome, page, pageSize, sort);
         long total = service.count(nome);
         return new PaginacaoResponse<>(clientes, page, pageSize, total);
+    }
+
+    @PUT
+    @RolesAllowed({ "Cliente", "Admin" })
+    @Path("parcial/{id}")
+    public Response alterarParcial(ClienteUpdateDTO dto, @PathParam("id") Long id) {
+        LOG.infof("Atualizando parcialmente usuario de id:", id);
+        try {
+            if (!isOwner(id) && !jwt.getGroups().contains("Admin")) {
+                return Response.status(Status.FORBIDDEN).build();
+            }
+            service.updatePartial(dto, id);
+            return Response.noContent().build();
+        } catch (ConstraintViolationException e) {
+            Result result = new Result(e.getConstraintViolations());
+            return Response.status(Status.BAD_REQUEST).entity(result).build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
+
+    @PATCH
+    @Transactional
+    @RolesAllowed({ "Cliente", "Admin" })
+    @Path("/updateSenha/{novaSenha}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateSenha(
+            @PathParam("novaSenha") String novaSenha,
+            @HeaderParam("Senha-Atual") String senhaAtual) {
+
+        String login = jwt.getSubject();
+        try {
+            usuarioService.updateSenha(login, novaSenha, senhaAtual);
+            LOG.info("Senha atualizada!");
+            return Response.ok("Senha atualizada com sucesso").build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(e.getMessage())
+                    .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Erro ao atualizar senha: " + e.getMessage())
+                    .build();
+        }
     }
 
     private boolean isOwner(Long clienteId) {

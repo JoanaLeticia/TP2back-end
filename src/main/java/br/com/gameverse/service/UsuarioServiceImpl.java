@@ -14,6 +14,8 @@ import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Parameters;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 
 @ApplicationScoped
 public class UsuarioServiceImpl implements UsuarioService {
@@ -30,22 +32,31 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Inject
     ClienteRepository clienteRepository;
 
+    @Inject
+    HashService hashService;
+
     @Override
     public UsuarioResponseDTO updateNome(String email, String nome) {
         Usuario usuarioNomeEditado = usuarioRepository.findByEmail(email);
         usuarioNomeEditado.setNome(nome);
         usuarioRepository.persist(usuarioNomeEditado);
 
-        return UsuarioResponseDTO.valueOf(usuarioNomeEditado);   
+        return UsuarioResponseDTO.valueOf(usuarioNomeEditado);
     }
 
-    @Override
-    public UsuarioResponseDTO updateSenha(String email, String senha) {
-        Usuario usuarioSenhaEditada = usuarioRepository.findByEmail(email);
-        usuarioSenhaEditada.setSenha(senha);
-        usuarioRepository.persist(usuarioSenhaEditada);
+    @Transactional
+    public void updateSenha(String login, String novaSenha, String senhaAtual) {
+        Usuario usuario = usuarioRepository.findByEmail(login);
+        if (usuario == null) {
+            throw new EntityNotFoundException("Usuário não encontrado");
+        }
 
-        return UsuarioResponseDTO.valueOf(usuarioSenhaEditada);  
+        // Verifica senha atual
+        if (!hashService.verificarSenha(senhaAtual, usuario.getSenha())) {
+            throw new SecurityException("Senha atual incorreta");
+        }
+
+        usuario.setSenha(hashService.getHashSenha(novaSenha));
     }
 
     @Override
@@ -64,7 +75,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         Usuario usuario = usuarioRepository.findByEmailAndSenha(email, senha);
         if (usuario == null)
             throw new br.com.gameverse.validation.ValidationException("email", "Login ou senha inválido");
-        return UsuarioResponseDTO.valueOf(usuario);   
+        return UsuarioResponseDTO.valueOf(usuario);
     }
 
     @Override
@@ -99,10 +110,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         List<Usuario> usuarios = panacheQuery.list();
 
         return usuarios.stream()
-            .map(UsuarioResponseDTO::valueOf)
-            .collect(Collectors.toList());
+                .map(UsuarioResponseDTO::valueOf)
+                .collect(Collectors.toList());
     }
-
 
     @Override
     public List<UsuarioResponseDTO> findByNome(String nome, int page, int pageSize, String sort) {
@@ -130,7 +140,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         String jpql = "lower(nome) like lower(:nome) " + orderByClause;
 
         PanacheQuery<Usuario> panacheQuery = usuarioRepository
-            .find(jpql, Parameters.with("nome", "%" + nome + "%"));
+                .find(jpql, Parameters.with("nome", "%" + nome + "%"));
 
         if (pageSize > 0) {
             panacheQuery = panacheQuery.page(Page.of(page, pageSize));
@@ -139,10 +149,9 @@ public class UsuarioServiceImpl implements UsuarioService {
         List<Usuario> usuarios = panacheQuery.list();
 
         return usuarios.stream()
-            .map(UsuarioResponseDTO::valueOf)
-            .collect(Collectors.toList());
+                .map(UsuarioResponseDTO::valueOf)
+                .collect(Collectors.toList());
     }
-
 
     public List<Usuario> findByNome(String nome) {
         return usuarioRepository.findByNome(nome).list();

@@ -150,8 +150,13 @@ public class ProdutoResource {
 
     @GET
     @Path("/plataforma/{nomePlataforma}/count")
-    public long totalPorPlataforma(@PathParam("nomePlataforma") String nomePlataforma) {
-        return service.countPorPlataforma(nomePlataforma);
+    public long totalPorPlataforma(
+            @PathParam("nomePlataforma") String nomePlataforma,
+            @QueryParam("genero") String genero,
+            @QueryParam("desenvolvedora") String desenvolvedora,
+            @QueryParam("precoMax") Double precoMax) {
+
+        return service.countPorPlataforma(nomePlataforma, genero, desenvolvedora, precoMax);
     }
 
     @GET
@@ -202,11 +207,17 @@ public class ProdutoResource {
 
     @GET
     @Path("/plataforma/{nome}")
-    public List<ProdutoResponseDTO> buscarPorPlataforma(@PathParam("nome") String nomePlataforma,
+    public List<ProdutoResponseDTO> buscarPorPlataforma(
+            @PathParam("nome") String nomePlataforma,
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("10") int size,
-            @QueryParam("sort") @DefaultValue("id asc") String sort) {
-        return service.buscarPorPlataforma(nomePlataforma, page, size, sort);
+            @QueryParam("sort") @DefaultValue("id asc") String sort,
+            @QueryParam("genero") String genero,
+            @QueryParam("desenvolvedora") String desenvolvedora,
+            @QueryParam("precoMax") Double precoMax) {
+
+        return service.buscarPorPlataforma(nomePlataforma, page, size, sort,
+                genero, desenvolvedora, precoMax);
     }
 
     @GET

@@ -18,5 +18,4 @@ public class MunicipioRepository implements PanacheRepository<Municipio> {
     public PanacheQuery<Municipio> findByEstado(Long idEstado) {
         return find("estado.id = ?1", idEstado);
     }
-
 }

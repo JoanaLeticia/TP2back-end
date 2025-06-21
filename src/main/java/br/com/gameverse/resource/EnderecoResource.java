@@ -123,6 +123,7 @@ public class EnderecoResource {
     @POST
     @RolesAllowed({ "Cliente", "Admin" })
     public Response incluir(EnderecoDTO dto) {
+        LOG.info("DTO recebido: " + dto.toString());
         try {
             if (!jwt.getGroups().contains("Admin") && !isOwner(dto.idCliente())) {
                 throw new NotAuthorizedException(
@@ -139,13 +140,14 @@ public class EnderecoResource {
     @RolesAllowed({ "Cliente", "Admin" })
     @Path("/{id}")
     public Response alterar(EnderecoDTO dto, @PathParam("id") Long id) {
+        LOG.info("DTO recebido: " + dto.toString());
         try {
             EnderecoResponseDTO endereco = service.findById(id);
             if (!jwt.getGroups().contains("Admin") && !isOwner(endereco.clienteId())) {
                 throw new NotAuthorizedException("Acesso negado: você só pode editar seus próprios endereços");
             }
-            service.update(dto, id);
-            return Response.noContent().build();
+            EnderecoResponseDTO enderecoAtualizado = service.update(dto, id); // Captura o retorno do service
+            return Response.ok(enderecoAtualizado).build(); // Retorna 200 com o endereço atualizado
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
             return Response.status(Status.NOT_FOUND).entity(result).build();

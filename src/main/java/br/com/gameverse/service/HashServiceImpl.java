@@ -1,5 +1,6 @@
 package br.com.gameverse.service;
 
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
@@ -30,6 +31,30 @@ public class HashServiceImpl implements HashService {
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean verificarSenha(String senhaTextoPuro, String senhaHash) {
+        try {
+            // Gera o hash da senha fornecida
+            String hashParaVerificar = this.getHashSenha(senhaTextoPuro);
+            
+            // Compara os hashes de forma segura contra timing attacks
+            return slowEquals(hashParaVerificar, senhaHash);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean slowEquals(String a, String b) {
+        byte[] aBytes = a.getBytes(StandardCharsets.UTF_8);
+        byte[] bBytes = b.getBytes(StandardCharsets.UTF_8);
+        
+        int diff = aBytes.length ^ bBytes.length;
+        for (int i = 0; i < aBytes.length && i < bBytes.length; i++) {
+            diff |= aBytes[i] ^ bBytes[i];
+        }
+        return diff == 0;
     }
 
     public static void main(String[] args) {

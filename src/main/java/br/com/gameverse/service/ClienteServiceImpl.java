@@ -2,10 +2,14 @@ package br.com.gameverse.service;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import br.com.gameverse.dto.ClienteDTO;
 import br.com.gameverse.dto.ClienteResponseDTO;
+import br.com.gameverse.dto.ClienteUpdateDTO;
+import br.com.gameverse.dto.TelefoneDTO;
 import br.com.gameverse.dto.UsuarioResponseDTO;
 import br.com.gameverse.model.Cliente;
 import br.com.gameverse.model.Endereco;
@@ -136,6 +140,53 @@ public class ClienteServiceImpl implements ClienteService {
         }
 
         return ClienteResponseDTO.valueOf(clienteEditado);
+    }
+
+    @Override
+    @Transactional
+    public void updatePartial(ClienteUpdateDTO dto, Long id) {
+        Cliente cliente = clienteRepository.findById(id);
+        if (cliente == null) {
+            throw new EntityNotFoundException("Cliente não encontrado");
+        }
+
+        System.out.println("Telefones recebidos no DTO: " + dto.listaTelefone());
+        System.out.println("Telefones atuais no cliente: " + cliente.getTelefones());
+
+        if (dto.nome() != null) {
+            cliente.setNome(dto.nome());
+        }
+        if (dto.dataNascimento() != null) {
+            cliente.setDataNascimento(dto.dataNascimento());
+        }
+        if (dto.cpf() != null) {
+            cliente.setCpf(dto.cpf());
+        }
+
+        if (dto.listaTelefone() != null) {
+            Map<Long, Telefone> telefonesExistentes = cliente.getTelefones().stream()
+                    .collect(Collectors.toMap(Telefone::getId, Function.identity()));
+
+            cliente.getTelefones().clear();
+
+            for (TelefoneDTO telDTO : dto.listaTelefone()) {
+                Telefone telefone;
+
+                if (telDTO.id() != null && telefonesExistentes.containsKey(telDTO.id())) {
+                    // Atualiza existente
+                    telefone = telefonesExistentes.get(telDTO.id());
+                    telefone.setCodArea(telDTO.codArea());
+                    telefone.setNumero(telDTO.numero());
+                } else {
+                    // Cria novo
+                    telefone = new Telefone();
+                    telefone.setCodArea(telDTO.codArea());
+                    telefone.setNumero(telDTO.numero());
+                    telefone.setCliente(cliente);
+                }
+                cliente.getTelefones().add(telefone);
+            }
+        }
     }
 
     @Override

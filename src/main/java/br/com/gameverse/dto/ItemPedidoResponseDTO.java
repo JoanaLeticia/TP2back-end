@@ -8,14 +8,16 @@ public record ItemPedidoResponseDTO(
         Integer quantidade,
         Double valor,
         Long idProduto,
-        String nome
+        String nome,
+        String nomeImagem
 ) {
     public static ItemPedidoResponseDTO valueOf(ItemPedido item) {
         return new ItemPedidoResponseDTO(
             item.getQuantidade(),
             item.getValor(),
             item.getProduto().getId(),
-            item.getProduto().getNome()
+            item.getProduto().getNome(),
+            item.getProduto().getNomeImagem()
         );
     }
 

@@ -154,10 +154,12 @@ public class ProdutoServiceImpl implements ProdutoService {
     }
 
     @Override
-    public List<ProdutoResponseDTO> buscarPorPlataforma(String nomePlataforma, int page, int pageSize, String sort) {
-        List<String> allowedSortFields = List.of("id", "nome", "preco", "estoque");
+    public List<ProdutoResponseDTO> buscarPorPlataforma(String nomePlataforma,
+            int page, int pageSize, String sort,
+            String genero, String desenvolvedora, Double precoMax) {
 
-        String orderByClause = "order by id"; // padrão
+        List<String> allowedSortFields = List.of("id", "nome", "preco", "estoque");
+        String orderByClause = "order by id";
 
         if (sort != null && !sort.isBlank()) {
             String[] sortParts = sort.trim().split(" ");
@@ -175,11 +177,31 @@ public class ProdutoServiceImpl implements ProdutoService {
 
         try {
             Plataforma plataforma = Plataforma.valueOf(nomePlataforma.toUpperCase());
+            Genero generoEnum = genero != null ? Genero.fromNome(genero.toUpperCase()) : null;
 
-            String query = "plataforma = :plataforma " + orderByClause;
+            StringBuilder queryBuilder = new StringBuilder("plataforma = :plataforma");
+            Parameters parameters = Parameters.with("plataforma", plataforma);
 
-            PanacheQuery<Produto> panacheQuery = produtoRepository.find(query,
-                    Parameters.with("plataforma", plataforma));
+            if (genero != null) {
+                queryBuilder.append(" and genero = :genero");
+                parameters.and("genero", generoEnum);
+            }
+
+            if (desenvolvedora != null) {
+                queryBuilder.append(" and desenvolvedora = :desenvolvedora");
+                parameters.and("desenvolvedora", desenvolvedora);
+            }
+
+            if (precoMax != null) {
+                queryBuilder.append(" and preco <= :precoMax");
+                parameters.and("precoMax", precoMax);
+            }
+
+            queryBuilder.append(" ").append(orderByClause);
+
+            PanacheQuery<Produto> panacheQuery = produtoRepository.find(
+                    queryBuilder.toString(),
+                    parameters);
 
             if (pageSize > 0) {
                 panacheQuery = panacheQuery.page(Page.of(page, pageSize));
@@ -190,7 +212,7 @@ public class ProdutoServiceImpl implements ProdutoService {
                     .collect(Collectors.toList());
 
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Plataforma inválida: " + nomePlataforma);
+            throw new RuntimeException("Plataforma ou gênero inválido: " + e.getMessage());
         }
     }
 
@@ -205,43 +227,68 @@ public class ProdutoServiceImpl implements ProdutoService {
     }
 
     @Override
-    public long countPorPlataforma(String nomePlataforma) {
-        Plataforma plataforma = Plataforma.valueOf(nomePlataforma.toUpperCase());
-        return produtoRepository.countByPlataforma(plataforma);
+    public long countPorPlataforma(String nomePlataforma, String genero, String desenvolvedora, Double precoMax) {
+        try {
+            Plataforma plataforma = Plataforma.valueOf(nomePlataforma.toUpperCase());
+            Genero generoEnum = genero != null ? Genero.valueOf(genero.toUpperCase()) : null;
+
+            StringBuilder queryBuilder = new StringBuilder("plataforma = :plataforma");
+            Parameters parameters = Parameters.with("plataforma", plataforma);
+
+            if (genero != null) {
+                queryBuilder.append(" and genero = :genero");
+                parameters.and("genero", generoEnum);
+            }
+
+            if (desenvolvedora != null) {
+                queryBuilder.append(" and desenvolvedora = :desenvolvedora");
+                parameters.and("desenvolvedora", desenvolvedora);
+            }
+
+            if (precoMax != null) {
+                queryBuilder.append(" and preco <= :precoMax");
+                parameters.and("precoMax", precoMax);
+            }
+
+            return produtoRepository.count(queryBuilder.toString(), parameters);
+
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Plataforma ou gênero inválido: " + e.getMessage());
+        }
     }
 
     @Override
-public Map<String, Object> getFiltrosPorPlataforma(String nomePlataforma) {
-    Map<String, Object> filtros = new HashMap<>();
-    
-    try {
-        Plataforma plataforma = Plataforma.valueOf(nomePlataforma.toUpperCase());
-        
-        // Obter gêneros distintos
-        List<String> generos = produtoRepository.findGenerosByPlataforma(plataforma)
-            .stream()
-            .map(Enum::name)
-            .collect(Collectors.toList());
-        
-        // Obter desenvolvedoras distintas
-        List<String> desenvolvedoras = produtoRepository.findDesenvolvedorasByPlataforma(plataforma);
-        
-        // Obter faixas de preço (usando a implementação dinâmica que criamos)
-        List<Double> faixasPreco = produtoRepository.findProdutosPrecoByPlataforma(plataforma);
-        
-        // Adicionar ao mapa de filtros
-        filtros.put("generos", generos);
-        filtros.put("desenvolvedoras", desenvolvedoras);
-        filtros.put("faixasPreco", faixasPreco);
-        
-        // Opcional: adicionar estatísticas úteis
-        filtros.put("quantidadeProdutos", produtoRepository.countByPlataforma(plataforma));
-        
-    } catch (IllegalArgumentException e) {
-        throw new RuntimeException("Plataforma inválida: " + nomePlataforma);
+    public Map<String, Object> getFiltrosPorPlataforma(String nomePlataforma) {
+        Map<String, Object> filtros = new HashMap<>();
+
+        try {
+            Plataforma plataforma = Plataforma.valueOf(nomePlataforma.toUpperCase());
+
+            // Obter gêneros distintos
+            List<String> generos = produtoRepository.findGenerosByPlataforma(plataforma)
+                    .stream()
+                    .map(Genero::getNome)
+                    .collect(Collectors.toList());
+
+            // Obter desenvolvedoras distintas
+            List<String> desenvolvedoras = produtoRepository.findDesenvolvedorasByPlataforma(plataforma);
+
+            // Obter faixas de preço (usando a implementação dinâmica que criamos)
+            List<Double> faixasPreco = produtoRepository.findProdutosPrecoByPlataforma(plataforma);
+
+            // Adicionar ao mapa de filtros
+            filtros.put("generos", generos);
+            filtros.put("desenvolvedoras", desenvolvedoras);
+            filtros.put("faixasPreco", faixasPreco);
+
+            // Opcional: adicionar estatísticas úteis
+            filtros.put("quantidadeProdutos", produtoRepository.countByPlataforma(plataforma));
+
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Plataforma inválida: " + nomePlataforma);
+        }
+
+        return filtros;
     }
-    
-    return filtros;
-}
 
 }

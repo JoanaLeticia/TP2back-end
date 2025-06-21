@@ -6,6 +6,7 @@ DELETE FROM cliente;
 DELETE FROM administrador;
 DELETE FROM usuario;
 DELETE FROM municipio;
+DELETE FROM produto;
 DELETE FROM estado;
 
 ALTER SEQUENCE IF EXISTS usuario_id_seq RESTART WITH 1;
@@ -21,12 +22,12 @@ INSERT INTO estado (nome, sigla, regiao) VALUES
 ('Rio Grande do Sul', 'RS', 5),
 ('Rio de Janeiro', 'RJ', 4);
 
-INSERT INTO municipio (id, nome, estado_id) VALUES 
-(1, 'Porto Nacional', 1),
-(2, 'Goiânia', 3),
-(3, 'São Paulo', 2),
-(4, 'Palmas', 1),
-(5, 'Porto Alegre', 4);
+INSERT INTO municipio (nome, estado_id) VALUES 
+('Porto Nacional', 1),
+('Goiânia', 3),
+('São Paulo', 2),
+('Palmas', 1),
+('Porto Alegre', 4);
 
 INSERT INTO usuario (nome, email, senha, perfil) VALUES 
 ('Admin Sistema', 'admin@email.com', 'SYu34Plo5KZGE9fMtUK9LRPnWC3WvVpogVg35bf5tPYMM6dxXNV6AWmPEQzOLc110uIwcv8TOigbaCB43f8KHQ==', 1), -- 123
@@ -47,7 +48,7 @@ INSERT INTO administrador (id, cpf, data_nascimento) VALUES
 (6, '999.888.777-66', '1982-11-30');
 
 INSERT INTO endereco (logradouro, numero, complemento, bairro, cep, municipio_id, id_cliente) VALUES 
-('Rua C S P', '1071', null, 'Centro', '77500-000', 1, 2),
+('Rua Costa Silva Pereira', '1231', null, 'Setor Aeroporto', '77500-000', 1, 2),
 ('Avenida Bandeirantes', '432', null, 'Vila Mariana', '23412-444', 2, 2),
 ('Rua Anhenguera', '78312', null, 'Vila Nova', '49313-641', 3, 3),
 ('Quadra 103 Sul', '15', 'Bloco A', 'Plano Diretor Sul', '77015-020', 4, 3),

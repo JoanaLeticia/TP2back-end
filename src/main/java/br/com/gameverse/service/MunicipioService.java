@@ -4,6 +4,7 @@ import java.util.List;
 
 import br.com.gameverse.dto.MunicipioDTO;
 import br.com.gameverse.dto.MunicipioResponseDTO;
+import br.com.gameverse.model.Estado;
 
 public interface MunicipioService {
     MunicipioResponseDTO create(MunicipioDTO municipio);
@@ -15,4 +16,7 @@ public interface MunicipioService {
     List<MunicipioResponseDTO> findByEstado(Long idEstado, int page, int pageSize, String sort);
     long count();
     long count(String nome);
+    List<Estado> getEstados();
+    List<MunicipioResponseDTO> findByEstado(Long idEstado);
+    List<MunicipioResponseDTO> findByNome(String nome);
 }

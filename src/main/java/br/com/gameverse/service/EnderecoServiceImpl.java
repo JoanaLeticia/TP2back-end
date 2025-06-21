@@ -9,6 +9,7 @@ import br.com.gameverse.dto.EnderecoDTO;
 import br.com.gameverse.dto.EnderecoResponseDTO;
 import br.com.gameverse.model.Cliente;
 import br.com.gameverse.model.Endereco;
+import br.com.gameverse.model.Municipio;
 import br.com.gameverse.model.StatusPedido;
 import br.com.gameverse.repository.ClienteRepository;
 import br.com.gameverse.repository.EnderecoRepository;
@@ -86,7 +87,9 @@ public class EnderecoServiceImpl implements EnderecoService {
         enderecoEditado.setComplemento(dto.complemento());
         enderecoEditado.setBairro(dto.bairro());
         enderecoEditado.setCep(dto.cep());
-        enderecoEditado.setMunicipio(municipioRepository.findById(dto.idMunicipio()));
+
+        Municipio municipio = municipioRepository.findById(dto.idMunicipio());
+        enderecoEditado.setMunicipio(municipio);
 
         enderecoRepository.persist(enderecoEditado);
         return EnderecoResponseDTO.valueOf(enderecoEditado);

@@ -2,6 +2,7 @@ package br.com.gameverse.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -17,7 +18,7 @@ public class Municipio {
     @Column(length = 60, nullable = false)
     private String nome;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "estado_id", nullable = false)
     private Estado estado;
 
@@ -44,5 +45,5 @@ public class Municipio {
     public void setEstado(Estado estado) {
         this.estado = estado;
     }
-    
+
 }

@@ -19,6 +19,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -64,7 +65,7 @@ public class UsuarioLogadoResource {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Erro ao retornar informações do usuário logado: " + e.getMessage())
                     .build();
-            
+
         }
     }
 
@@ -88,16 +89,23 @@ public class UsuarioLogadoResource {
     @PATCH
     @Transactional
     @RolesAllowed({ "Cliente", "Admin" })
-    @Path("/updateSenha/{senha}")
-    public Response updateSenha(@PathParam("senha") String senha) {
+    @Path("/updateSenha/{novaSenha}")
+    public Response updateSenha(
+            @PathParam("novaSenha") String novaSenha,
+            @HeaderParam("Senha-Atual") String senhaAtual) {
+
         String login = jwt.getSubject();
         try {
-            usuarioService.updateSenha(login, senha);
+            usuarioService.updateSenha(login, novaSenha, senhaAtual);
             LOG.info("Senha atualizada!");
-            return Response.ok("Informações do usuário atualizadas com sucesso").build();
+            return Response.ok("Senha atualizada com sucesso").build();
+        } catch (SecurityException e) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                    .entity(e.getMessage())
+                    .build();
         } catch (Exception e) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("Erro ao atualizar informações do usuário: " + e.getMessage())
+                    .entity("Erro ao atualizar senha: " + e.getMessage())
                     .build();
         }
     }
@@ -117,8 +125,8 @@ public class UsuarioLogadoResource {
         } else {
             LOG.error("Usuário não encontrado: " + login);
             return Response.status(Response.Status.NOT_FOUND)
-            .entity("Usuário não é cliente ou não foi encontrado.")
-            .build();
+                    .entity("Usuário não é cliente ou não foi encontrado.")
+                    .build();
         }
     }
 
@@ -136,8 +144,8 @@ public class UsuarioLogadoResource {
         } else {
             LOG.error("Usuário não encontrado: " + login);
             return Response.status(Response.Status.NOT_FOUND)
-            .entity("Usuário não é cliente ou não foi encontrado.")
-            .build();
+                    .entity("Usuário não é cliente ou não foi encontrado.")
+                    .build();
         }
     }
 }

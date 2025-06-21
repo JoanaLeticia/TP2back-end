@@ -1,6 +1,7 @@
 package br.com.gameverse.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum Genero {
@@ -37,4 +38,13 @@ public enum Genero {
         }
         return null;
      }
+
+     public static Genero fromNome(String nome) {
+        for (Genero genero : Genero.values()) {
+            if (genero.getNome().equalsIgnoreCase(nome)) {
+                return genero;
+            }
+        }
+        return null;
+    }
 }

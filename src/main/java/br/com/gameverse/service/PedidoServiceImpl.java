@@ -25,6 +25,7 @@ import br.com.gameverse.repository.EnderecoRepository;
 import br.com.gameverse.repository.PedidoRepository;
 import br.com.gameverse.repository.ProdutoRepository;
 import io.quarkus.hibernate.orm.panache.PanacheQuery;
+import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityNotFoundException;
@@ -249,5 +250,23 @@ public class PedidoServiceImpl implements PedidoService {
     @Override
     public long countByStatus(StatusPedido status) {
         return pedidoRepository.count("status", status);
+    }
+
+    @Override
+    public PedidoResponseDTO findLastByUser(String email) {
+        Cliente cliente = clienteRepository.findByEmail(email);
+        if (cliente == null) {
+            throw new EntityNotFoundException("Cliente não encontrado");
+        }
+
+        // Correção: usar a sintaxe correta do Panache para ordenação
+        Pedido ultimoPedido = pedidoRepository.find("cliente", Sort.descending("dataHora"), cliente)
+                .firstResult();
+
+        if (ultimoPedido == null) {
+            throw new EntityNotFoundException("Nenhum pedido encontrado para este usuário");
+        }
+
+        return PedidoResponseDTO.valueOf(ultimoPedido);
     }
 }

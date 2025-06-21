@@ -32,4 +32,6 @@ public interface PedidoService {
     List<PedidoResponseDTO> findByStatus(StatusPedido status, int page, int size, String sort);
 
     long countByStatus(StatusPedido status);
+
+    PedidoResponseDTO findLastByUser(String email);
 }

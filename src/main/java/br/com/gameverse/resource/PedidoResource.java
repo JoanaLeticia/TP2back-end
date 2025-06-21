@@ -9,7 +9,9 @@ import br.com.gameverse.application.Result;
 import br.com.gameverse.dto.PaginacaoResponse;
 import br.com.gameverse.dto.PedidoDTO;
 import br.com.gameverse.dto.PedidoResponseDTO;
+import br.com.gameverse.model.Cliente;
 import br.com.gameverse.model.StatusPedido;
+import br.com.gameverse.repository.ClienteRepository;
 import br.com.gameverse.service.PedidoService;
 import io.smallrye.common.constraint.NotNull;
 import jakarta.annotation.security.RolesAllowed;
@@ -41,6 +43,9 @@ public class PedidoResource {
 
     @Inject
     JsonWebToken jwt;
+
+    @Inject
+    ClienteRepository clienteRepository;
 
     private static final Logger LOG = Logger.getLogger(PedidoResource.class);
 
@@ -80,18 +85,19 @@ public class PedidoResource {
     }
 
     @GET
-    @RolesAllowed({ "Cliente", "Admin" })
     @Path("/{id}")
+    @RolesAllowed({ "Cliente", "Admin" })
     public Response buscarPorId(@PathParam("id") Long id) {
         try {
-            PedidoResponseDTO pedido = service.findById(id);
-
-            if (!jwt.getGroups().contains("Admin") && !isOwner(id)) {
+            if (!jwt.getGroups().contains("Admin") && !isOwner2(id)) {
                 return Response.status(Status.FORBIDDEN)
                         .entity("Acesso negado: você só pode visualizar seus próprios pedidos")
                         .build();
             }
+
+            PedidoResponseDTO pedido = service.findById(id);
             return Response.ok(pedido).build();
+
         } catch (EntityNotFoundException e) {
             return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
@@ -139,15 +145,72 @@ public class PedidoResource {
         return new PaginacaoResponse<>(pedidos, page, size, total);
     }
 
-    private boolean isOwner(Long pedidoId) {
+    @GET
+    @Path("/ultimo-pedido")
+    @RolesAllowed({ "Cliente", "Admin" })
+    public Response buscarUltimoPedido() {
+        try {
+            String email = jwt.getSubject();
+            LOG.info("Buscando último pedido para o usuário: " + email);
+            PedidoResponseDTO ultimoPedido = service.findLastByUser(email);
+            return Response.ok(ultimoPedido).build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            LOG.error("Erro ao buscar último pedido", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Erro ao buscar último pedido")
+                    .build();
+        }
+    }
+
+    @GET
+    @Path("/cliente/{clienteId}")
+    @RolesAllowed({ "Cliente", "Admin" })
+    public Response buscarPedidosPorClienteId(@PathParam("clienteId") Long clienteId) {
+        try {
+            if (!jwt.getGroups().contains("Admin") && !isOwner(clienteId)) {
+                return Response.status(Status.FORBIDDEN)
+                        .entity("Acesso negado: você só pode visualizar seus próprios pedidos")
+                        .build();
+            }
+            List<PedidoResponseDTO> pedidos = service.findAllPedidosByClienteId(clienteId);
+            return Response.ok(pedidos).build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        } catch (Exception e) {
+            LOG.error("Erro ao buscar pedidos do cliente", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity("Erro ao buscar pedidos do cliente").build();
+        }
+    }
+
+    private boolean isOwner(Long clienteId) {
+        if (clienteId == null || jwt == null || jwt.getSubject() == null) {
+            return false;
+        }
+
+        try {
+            Cliente cliente = clienteRepository.findById(clienteId);
+            String email = jwt.getSubject();
+
+            return cliente != null && email.equals(cliente.getEmail());
+        } catch (Exception e) {
+            LOG.error("Erro ao verificar propriedade do cliente", e);
+            return false;
+        }
+    }
+
+    private boolean isOwner2(Long pedidoId) {
         if (pedidoId == null || jwt == null || jwt.getSubject() == null) {
             return false;
         }
 
         try {
+            // Busca o pedido pelo ID
             PedidoResponseDTO pedido = service.findById(pedidoId);
-            String email = jwt.getSubject();
-            return pedido != null && email.equals(pedido.email());
+
+            // Verifica se o email do token corresponde ao email do cliente do pedido
+            return pedido != null && jwt.getSubject().equals(pedido.email());
         } catch (Exception e) {
             LOG.error("Erro ao verificar propriedade do pedido", e);
             return false;

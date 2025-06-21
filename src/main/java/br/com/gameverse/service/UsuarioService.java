@@ -6,7 +6,7 @@ import br.com.gameverse.dto.UsuarioResponseDTO;
 
 public interface UsuarioService {
     UsuarioResponseDTO updateNome(String email, String nome);
-    UsuarioResponseDTO updateSenha(String email, String senha);
+    void updateSenha(String login, String novaSenha, String senhaAtual);
     UsuarioResponseDTO findById(long id);
     UsuarioResponseDTO findByEmail(String email);
     UsuarioResponseDTO findByEmailAndSenha(String email, String senha);

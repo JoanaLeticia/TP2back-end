@@ -82,7 +82,7 @@ public class TelefoneResource {
     @GET
     @Path("/{id}")
     @RolesAllowed({ "Cliente", "Admin" })
-    public Response buscarPorId(Long id) {
+    public Response buscarPorId(@PathParam("id") Long id) {
         try {
             if (!isOwner(id) && !jwt.getGroups().contains("Admin")) {
                 return Response.status(Status.FORBIDDEN).build();

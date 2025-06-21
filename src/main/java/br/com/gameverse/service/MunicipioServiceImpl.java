@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import br.com.gameverse.dto.EstadoResponseDTO;
 import br.com.gameverse.dto.MunicipioDTO;
 import br.com.gameverse.dto.MunicipioResponseDTO;
 import br.com.gameverse.model.Estado;
@@ -27,9 +28,14 @@ public class MunicipioServiceImpl implements MunicipioService {
     @Override
     @Transactional
     public MunicipioResponseDTO create(MunicipioDTO municipio) {
+        System.out.println("ID do Estado recebido: " + municipio.idEstado());
+
         Estado estado = estadoRepository.findById(municipio.idEstado());
+
+        System.out.println("Estado encontrado: " + estado);
+
         if (estado == null) {
-            throw new IllegalArgumentException("Estado não encontrado");
+            throw new IllegalArgumentException("Estado não encontrado" + municipio.idEstado());
         }
 
         Municipio novoMunicipio = new Municipio();
@@ -37,6 +43,7 @@ public class MunicipioServiceImpl implements MunicipioService {
         novoMunicipio.setEstado(estado);
 
         municipioRepository.persist(novoMunicipio);
+        System.out.println("Município persistido com ID: " + novoMunicipio.getId());
 
         return MunicipioResponseDTO.valueOf(novoMunicipio);
     }
@@ -108,8 +115,10 @@ public class MunicipioServiceImpl implements MunicipioService {
     }
 
     public List<MunicipioResponseDTO> findByNome(String nome) {
-        return municipioRepository.findByNome(nome).stream()
-                .map(e -> MunicipioResponseDTO.valueOf(e)).toList();
+        return municipioRepository.find("UPPER(nome) LIKE UPPER(?1)", "%" + nome + "%")
+                .stream()
+                .map(MunicipioResponseDTO::valueOf)
+                .collect(Collectors.toList());
     }
 
     public List<MunicipioResponseDTO> findByEstado(Long idEstado, int page, int pageSize, String sort) {
@@ -153,4 +162,16 @@ public class MunicipioServiceImpl implements MunicipioService {
     public long count(String nome) {
         return municipioRepository.countByNome(nome);
     }
+
+    @Override
+    public List<Estado> getEstados() {
+        return estadoRepository.listAll();
+    }
+
+    @Override
+    public List<MunicipioResponseDTO> findByEstado(Long idEstado) {
+        return municipioRepository.find("estado.id", idEstado).stream()
+                .map(e -> MunicipioResponseDTO.valueOf(e)).toList();
+    }
+
 }

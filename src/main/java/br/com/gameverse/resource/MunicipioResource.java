@@ -3,9 +3,11 @@ package br.com.gameverse.resource;
 import java.util.List;
 
 import br.com.gameverse.application.Result;
+import br.com.gameverse.dto.EstadoResponseDTO;
 import br.com.gameverse.dto.MunicipioDTO;
 import br.com.gameverse.dto.MunicipioResponseDTO;
 import br.com.gameverse.dto.PaginacaoResponse;
+import br.com.gameverse.model.Estado;
 import br.com.gameverse.service.MunicipioService;
 import jakarta.inject.Inject;
 import jakarta.persistence.EntityNotFoundException;
@@ -85,6 +87,28 @@ public class MunicipioResource {
         return new PaginacaoResponse<>(municipios, page, pageSize, total);
     }
 
+    @GET
+    @Path("/estados/estado/{idEstado}")
+    public Response buscarPorEstado(@PathParam("idEstado") Long idEstado) {
+        try {
+            List<MunicipioResponseDTO> municipios = service.findByEstado(idEstado);
+            return Response.ok(municipios).build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
+
+    @GET
+    @Path("/estados")
+    public Response buscarEstados() {
+        try {
+            List<Estado> estados = service.getEstados();
+            return Response.ok(estados).build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
+    }
+
     @POST
     public Response incluir(MunicipioDTO dto) {
         try {
@@ -113,7 +137,7 @@ public class MunicipioResource {
     public Response apagar(@PathParam("id") Long id) {
         try {
             service.delete(id);
-        return Response.noContent().build();
+            return Response.noContent().build();
         } catch (ConstraintViolationException e) {
             Result result = new Result(e.getConstraintViolations());
             return Response.status(Status.NOT_FOUND).entity(result).build();
@@ -124,6 +148,17 @@ public class MunicipioResource {
     @Path("/count")
     public long total() {
         return service.count();
+    }
+
+    @GET
+    @Path("/search/nomesimple/{nome}")
+    public Response buscarPorNomeSemPaginacao(@PathParam("nome") String nome) {
+        try {
+            List<MunicipioResponseDTO> municipios = service.findByNome(nome);
+            return Response.ok(municipios).build();
+        } catch (EntityNotFoundException e) {
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
     }
 
 }
